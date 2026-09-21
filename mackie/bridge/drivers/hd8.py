@@ -16,7 +16,7 @@ class HD8(Driver):
             try:
                 from quantum_hd8.client import Client
             except ImportError as e:      # pragma: no cover - depends on the host
-                raise Unsupported("quantum-hd8 nao instalado: "
+                raise Unsupported("quantum-hd8 is not installed: "
                                   "pipx install git+https://github.com/jpfaria/quantum-hd8") from e
             client = Client()
             client.connect()
@@ -37,8 +37,8 @@ class HD8(Driver):
         return [n.removesuffix(".scene") for n in self.cli.scenes]
 
     def load_scene(self, index):
-        nomes = self.scenes()
-        if not 0 <= index < len(nomes):
-            raise Unsupported(f"cena {index + 1} nao existe (tem {len(nomes)})")
-        self.cli.load_scene(nomes[index], keep_gains=True)
-        return nomes[index]
+        names = self.scenes()
+        if not 0 <= index < len(names):
+            raise Unsupported(f"scene {index + 1} does not exist (there are {len(names)})")
+        self.cli.load_scene(names[index], keep_gains=True)
+        return names[index]

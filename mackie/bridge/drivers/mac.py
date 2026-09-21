@@ -21,26 +21,26 @@ class MacVolume(Driver):
     not in the OS -- and this driver says so instead of guessing."""
     name = "mac"
 
-    _SEM_CONTROLE = ("a saida padrao do Mac nao tem volume controlavel pelo "
-                     "sistema (interface de audio selecionada)")
+    _NO_SYSTEM_VOLUME = ("the Mac's default output has no system-controlled "
+                         "volume (an audio interface is selected)")
 
     def read(self, target=None):
-        bruto = _osascript("output volume of (get volume settings)")
-        if bruto == "missing value":
-            raise Unsupported(self._SEM_CONTROLE)
-        return int(bruto) / 100
+        raw = _osascript("output volume of (get volume settings)")
+        if raw == "missing value":
+            raise Unsupported(self._NO_SYSTEM_VOLUME)
+        return int(raw) / 100
 
     def write(self, target, value):
-        self.read()                      # falha cedo, com a razao certa
+        self.read()                      # fail early, with the right reason
         _osascript(f"set volume output volume {round(value * 100)}")
 
     def toggle(self, target=None):
-        bruto = _osascript("output muted of (get volume settings)")
-        if bruto == "missing value":
-            raise Unsupported(self._SEM_CONTROLE)
-        mudo = bruto == "true"
-        _osascript(f"set volume {'without' if mudo else 'with'} output muted")
-        return not mudo
+        raw = _osascript("output muted of (get volume settings)")
+        if raw == "missing value":
+            raise Unsupported(self._NO_SYSTEM_VOLUME)
+        muted = raw == "true"
+        _osascript(f"set volume {'without' if muted else 'with'} output muted")
+        return not muted
 
 
 class AppVolume(Driver):
@@ -51,7 +51,7 @@ class AppVolume(Driver):
         try:
             return int(_osascript(f'tell application "{target}" to sound volume')) / 100
         except subprocess.CalledProcessError as e:
-            raise Unsupported(f"{target} nao respondeu: {e}") from e
+            raise Unsupported(f"{target} did not answer: {e}") from e
 
     def write(self, target, value):
         _osascript(f'tell application "{target}" to set sound volume to {round(value * 100)}')

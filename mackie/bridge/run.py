@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import threading
-import time
 
 import mido
 
@@ -11,27 +10,27 @@ from .daemon import Bridge
 from .profile import load_profile
 
 
-def find_port(hint: str, nomes: list[str]) -> str:
-    achou = [n for n in nomes if hint in n]
-    if not achou:
-        raise SystemExit(f"nenhuma porta MIDI com {hint!r}: {nomes}")
-    return achou[0]
+def find_port(hint: str, names: list[str]) -> str:
+    found = [n for n in names if hint in n]
+    if not found:
+        raise SystemExit(f"no MIDI port matching {hint!r}: {names}")
+    return found[0]
 
 
-def run(caminho_perfil: str, port: str | None = None, log=print) -> None:
-    perfil = load_profile(caminho_perfil)
-    surface = get_surface(perfil.surface)
-    entrada = port or find_port(surface.port_hint, mido.get_input_names())
-    saida = port or find_port(surface.port_hint, mido.get_output_names())
+def run(profile_path: str, port: str | None = None, log=print) -> None:
+    profile = load_profile(profile_path)
+    surface = get_surface(profile.surface)
+    src = port or find_port(surface.port_hint, mido.get_input_names())
+    dst = port or find_port(surface.port_hint, mido.get_output_names())
 
-    with mido.open_output(saida) as out, mido.open_input(entrada) as inp:
-        ponte = Bridge(perfil, enviar=lambda **k: out.send(mido.Message(**k)), log=log)
-        threading.Thread(target=ponte.escoa, daemon=True).start()
-        log(f"ponte: {surface.name} ({entrada}) -> "
-            + ", ".join(b.name for b in perfil.banks))
-        ponte.escolhe_banco(0)
+    with mido.open_output(dst) as out, mido.open_input(src) as inp:
+        bridge = Bridge(profile, send=lambda **k: out.send(mido.Message(**k)), log=log)
+        threading.Thread(target=bridge.drain_forever, daemon=True).start()
+        log(f"bridge: {surface.name} ({src}) -> "
+            + ", ".join(b.name for b in profile.banks))
+        bridge.select_bank(0)
         try:
             for msg in inp:
-                ponte.on_midi(msg)
+                bridge.on_midi(msg)
         except KeyboardInterrupt:
-            log("fim")
+            log("stopped")

@@ -15,18 +15,18 @@ def cmd_bridge(a):
 
 
 def cmd_surfaces(a):
-    for nome, s in surfaces.SURFACES.items():
-        print(f"{nome}: {s.name} -- {s.faders} faders, {s.encoders} encoders, "
-              f"porta {s.port_hint!r}")
+    for name, s in surfaces.SURFACES.items():
+        print(f"{name}: {s.name} -- {s.faders} faders, {s.encoders} encoders, "
+              f"port {s.port_hint!r}")
         if s.notes:
             print(f"  {s.notes}")
 
 
 def cmd_ports(a):
-    print("entradas:")
+    print("inputs:")
     for n in mido.get_input_names():
         print(f"  {n}")
-    print("saidas:")
+    print("outputs:")
     for n in mido.get_output_names():
         print(f"  {n}")
 
@@ -34,19 +34,19 @@ def cmd_ports(a):
 def cmd_watch(a):
     """Print what the surface sends, decoded -- how every mapping here was found."""
     surface = surfaces.get(a.surface)
-    porta = a.port or next((n for n in mido.get_input_names()
+    port = a.port or next((n for n in mido.get_input_names()
                             if surface.port_hint in n), None)
-    if porta is None:
-        raise SystemExit(f"nenhuma porta com {surface.port_hint!r}; veja `mackie ports`")
-    print(f"ouvindo {porta} por {a.seconds}s (Ctrl-C para sair)")
+    if port is None:
+        raise SystemExit(f"no port matching {surface.port_hint!r}; see `mackie ports`")
+    print(f"listening on {port} for {a.seconds}s (Ctrl-C to stop)")
     import time
-    fim = time.time() + a.seconds
-    with mido.open_input(porta) as inp:
-        while time.time() < fim:
+    end = time.time() + a.seconds
+    with mido.open_input(port) as inp:
+        while time.time() < end:
             for msg in inp.iter_pending():
-                evento = protocol.decode(msg)
-                if evento is not None:
-                    print(f"  {evento}")
+                event = protocol.decode(msg)
+                if event is not None:
+                    print(f"  {event}")
             time.sleep(0.01)
 
 
@@ -54,9 +54,9 @@ def main(argv=None):
     ap = argparse.ArgumentParser(prog="mackie", description=__doc__)
     sub = ap.add_subparsers(dest="cmd")
 
-    s = sub.add_parser("bridge", help="run a surface against a rig profile: bridge PERFIL.yaml")
+    s = sub.add_parser("bridge", help="run a surface against a rig profile: bridge PROFILE.yaml")
     s.add_argument("profile")
-    s.add_argument("--port", help="porta MIDI exata, se o palpite da superficie nao servir")
+    s.add_argument("--port", help="exact MIDI port, when the surface's hint is not enough")
     s.set_defaults(fn=cmd_bridge)
 
     s = sub.add_parser("surfaces", help="control surfaces this package knows")

@@ -12,4 +12,4 @@ def test_find_port_matches_by_hint():
 def test_find_port_without_a_match_is_refused():
     with pytest.raises(SystemExit) as e:
         run.find_port("SMC-Mixer-Master", ["Quantum HD 8 MIDI"])
-    assert "nenhuma porta" in str(e.value)
+    assert "no MIDI port" in str(e.value)

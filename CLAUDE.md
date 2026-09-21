@@ -1,30 +1,36 @@
 # mackie-control
 
-## Toda mudança é commitada E empurrada
-Qualquer mudança aqui termina com `git commit` + `git push` no `origin/main` no
-mesmo turno. O jpfaria instala por `pip install git+https://github.com/jpfaria/mackie-control`;
-commit parado na máquina não existe para ele nem para as outras sessões.
-Rodar `python3 -m pytest -q` e conferir o código de saída antes de commitar.
+## Every change is committed AND pushed
+Any change here ends with `git commit` + `git push` to `origin/main` in the same
+turn. João installs this with `pip install git+https://github.com/jpfaria/mackie-control`;
+an unpushed commit does not exist for him or for his other sessions. Run
+`python3 -m pytest -q` and check the exit code before committing.
 
-## O que este repo é — e o que ele não é
-É a **superfície** (Mackie) e a **ponte**. Não é um repo de um aparelho: nada do
-rig de ninguém entra no código. Destino de fader, nome de canal e path de mixer
-moram no **perfil YAML do usuário**, fora daqui.
-**Por quê:** a primeira versão desta ponte nasceu dentro do repo do rig do
-jpfaria, com `line/ch1/volume` cravado no meio do código; em 21/09 ela teve que
-ser movida duas vezes de casa por isso.
+## What this repo is — and is not
+It is the **surface** (Mackie) and the **bridge**. It is not a repo about one
+piece of gear, and **nobody's rig belongs in the code**: fader destinations,
+channel names and mixer paths live in the user's **YAML profile**, outside this
+repo.
+**Why:** this bridge was born inside João's rig repo with `line/ch1/volume`
+hardcoded in the middle of it, and on 2026-09-21 it had to move house twice
+because of that.
 
-## Protocolo se mede, não se lembra
-Nota, CC e comportamento de aparelho entram aqui **medidos**, com data, e a
-medição vai para `docs/`. Manual de fabricante é ponto de partida, não prova —
-o SMC-Mixer, por exemplo, não responde ao Device Query do Mackie, coisa que
-nenhum manual diz.
+## Protocol is measured, never remembered
+Notes, CCs and device behaviour land here **measured**, with the date, and the
+measurement goes into `docs/`. A manufacturer's manual is a starting point, not
+proof — the SMC-Mixer, for one, does not answer the Mackie Device Query, which
+no manual mentions.
 
-## Driver que falha não derruba nada
-Um parâmetro que o aparelho recusa vira `Unsupported` + aviso no log, e o resto
-da operação segue. Em 21/09 uma escrita recusada (`line/ch20/mute`) abortava o
-solo inteiro no meio, deixando o mixer em estado quebrado e o botão sem desfazer.
+## A failing driver brings nothing down
+A parameter the device refuses becomes `Unsupported` plus a line in the log, and
+the rest of the operation continues. On 2026-09-21 one refused write
+(`line/ch20/mute`) aborted a whole solo halfway through, leaving the mixer in a
+broken state and the button unable to undo it.
 
-## Teste sem hardware
-Driver e cliente entram por injeção (`HD8(client=...)`), e o perfil é dado.
-Nenhum teste deste repo pode exigir aparelho ligado.
+## Tests run without hardware
+Drivers and clients go in by injection (`HD8(client=...)`), and the profile is
+data. No test in this repo may require a device to be plugged in.
+
+## Language
+Code, comments, docs and log messages are in **English**. João reads Portuguese
+in chat, not in a public repo.

@@ -37,8 +37,8 @@ class Driver:
 
 def build(name: str, **opts) -> Driver:
     from . import hd8, mac
-    tabela = {"hd8": hd8.HD8, "mac": mac.MacVolume, "app": mac.AppVolume}
+    known = {"hd8": hd8.HD8, "mac": mac.MacVolume, "app": mac.AppVolume}
     try:
-        return tabela[name](**opts)
+        return known[name](**opts)
     except KeyError:
-        raise SystemExit(f"unknown driver {name!r}; known: {', '.join(tabela)}")
+        raise SystemExit(f"unknown driver {name!r}; known: {', '.join(known)}")

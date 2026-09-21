@@ -1,0 +1,12 @@
+# The smallest profile that does something: one fader on the system volume.
+#
+#   mackie bridge examples/minimal.yaml
+#
+# Fader 1 controls the Mac's output volume. Touching it does nothing until it
+# crosses the current volume (soft takeover) -- that is by design.
+surface: smc-mixer
+
+banks:
+  - name: Mac
+    faders:
+      1: {driver: mac, label: System volume}

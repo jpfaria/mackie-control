@@ -10,36 +10,36 @@ class FakeDriver(Driver):
     name = "fake"
 
     def __init__(self):
-        self.valores = {"main": 0.5, "g1": 0.2, "g2": 0.8,
-                        "main/mute": 0.0, "g1/mute": 0.0, "g2/mute": 0.0}
-        self.carregou = None
+        self.values = {"main": 0.5, "phones": 0.4, "g1": 0.2, "g2": 0.8,
+                       "main/mute": 0.0, "g1/mute": 0.0, "g2/mute": 0.0}
+        self.loaded = None
 
     def read(self, target):
-        return self.valores[target]
+        return self.values[target]
 
     def write(self, target, value):
-        self.valores[target] = value
+        self.values[target] = value
 
     def toggle(self, target):
-        novo = 0.0 if self.valores[target] >= 0.5 else 1.0
-        self.valores[target] = novo
-        return novo >= 0.5
+        new = 0.0 if self.values[target] >= 0.5 else 1.0
+        self.values[target] = new
+        return new >= 0.5
 
     def scenes(self):
-        return ["UMA", "OUTRA"]
+        return ["ONE", "TWO"]
 
     def load_scene(self, index):
         if index >= 2:
-            raise Unsupported("nao existe")
-        self.carregou = self.scenes()[index]
-        return self.carregou
+            raise Unsupported("no such scene")
+        self.loaded = self.scenes()[index]
+        return self.loaded
 
 
-PERFIL = {"banks": [
+PROFILE = {"banks": [
     {"name": "rig", "faders": {
         1: {"driver": "fake", "target": "main", "label": "MAIN", "group": "out",
             "mute": "main/mute"},
-        2: {"driver": "fake", "target": "fone", "label": "FONE", "group": "out"},
+        2: {"driver": "fake", "target": "phones", "label": "PHONES", "group": "out"},
         5: {"driver": "fake", "target": "g1", "label": "G1", "group": "in",
             "mute": "g1/mute"},
         6: {"driver": "fake", "target": "g2", "label": "G2", "group": "in",
@@ -49,72 +49,71 @@ PERFIL = {"banks": [
 
 
 @pytest.fixture
-def ponte():
-    d = FakeDriver()
-    d.valores["fone"] = 0.4
-    b = daemon.Bridge(profile.parse_profile(PERFIL), enviar=lambda **k: None,
-                      drivers={"fake": d}, log=lambda *a: None)
-    return b, d
+def bridge():
+    fake = FakeDriver()
+    b = daemon.Bridge(profile.parse_profile(PROFILE), send=lambda **k: None,
+                      drivers={"fake": fake}, log=lambda *a: None)
+    return b, fake
 
 
-def test_fader_longe_do_valor_nao_escreve(ponte):
-    b, d = ponte
-    b.fader(0, 0.9)                      # main esta em 0.5
-    b.escoa_uma_vez()
-    assert d.valores["main"] == 0.5
+def test_a_fader_far_from_the_value_writes_nothing(bridge):
+    b, fake = bridge
+    b.fader(0, 0.9)                        # main sits at 0.5
+    b.drain()
+    assert fake.values["main"] == 0.5
 
 
-def test_fader_assume_ao_cruzar_o_valor(ponte):
-    b, d = ponte
+def test_a_fader_takes_over_when_it_crosses_the_value(bridge):
+    b, fake = bridge
     b.fader(0, 0.9)
-    b.fader(0, 0.1)                      # cruzou 0.5
-    b.escoa_uma_vez()
-    assert d.valores["main"] == 0.1
+    b.fader(0, 0.1)                        # crossed 0.5
+    b.drain()
+    assert fake.values["main"] == 0.1
 
 
-def test_fader_ja_perto_assume_na_hora(ponte):
-    b, d = ponte
+def test_a_fader_already_near_takes_over_at_once(bridge):
+    b, fake = bridge
     b.fader(0, 0.51)
-    b.escoa_uma_vez()
-    assert d.valores["main"] == 0.51
+    b.drain()
+    assert fake.values["main"] == 0.51
 
 
-def test_escoa_aplica_so_a_ultima_posicao(ponte):
-    b, d = ponte
+def test_drain_applies_only_the_last_position(bridge):
+    b, fake = bridge
     b.fader(0, 0.5)
     for v in (0.6, 0.7, 0.8):
         b.fader(0, v)
-    b.escoa_uma_vez()
-    assert d.valores["main"] == 0.8
+    b.drain()
+    assert fake.values["main"] == 0.8
 
 
-def test_solo_muta_o_grupo_e_devolve(ponte):
-    b, d = ponte
+def test_solo_mutes_its_group_and_gives_it_back(bridge):
+    b, fake = bridge
     b.solo(5)
-    assert d.valores["g1/mute"] == 0.0 and d.valores["g2/mute"] == 1.0
-    assert d.valores["main/mute"] == 0.0        # saida nao entra no solo
+    assert fake.values["g1/mute"] == 0.0 and fake.values["g2/mute"] == 1.0
+    assert fake.values["main/mute"] == 0.0     # outputs stay out of an input solo
     b.solo(5)
-    assert d.valores["g2/mute"] == 0.0
+    assert fake.values["g2/mute"] == 0.0
 
 
-def test_solo_de_saida_zera_quem_nao_tem_mute(ponte):
-    b, d = ponte
+def test_solo_on_an_output_zeroes_whoever_has_no_mute(bridge):
+    b, fake = bridge
     b.solo(1)
-    assert d.valores["fone"] == 0.0
+    assert fake.values["phones"] == 0.0
     b.solo(1)
-    assert d.valores["fone"] == 0.4             # devolvido como estava
+    assert fake.values["phones"] == 0.4        # handed back as it was
 
 
-def test_mute_sem_parametro_zera_e_devolve(ponte):
-    b, d = ponte
+def test_mute_without_a_parameter_zeroes_and_gives_back(bridge):
+    b, fake = bridge
     b.mute(2)
-    assert d.valores["fone"] == 0.0
+    assert fake.values["phones"] == 0.0
     b.mute(2)
-    assert d.valores["fone"] == 0.4
+    assert fake.values["phones"] == 0.4
 
 
-def test_botoes_de_banco(ponte):
-    b, _ = ponte
+def test_bank_buttons(bridge):
+    b, _ = bridge
     b.on_midi(mido.Message("note_on", note=mackie.BANK_RIGHT, velocity=127))
     assert b.bank.name == "mac"
     b.on_midi(mido.Message("note_on", note=mackie.ARROW_LEFT, velocity=127))
@@ -123,55 +122,54 @@ def test_botoes_de_banco(ponte):
     assert b.bank.name == "mac"
 
 
-def test_trocar_de_banco_exige_takeover_de_novo(ponte):
-    b, d = ponte
+def test_changing_bank_arms_takeover_again(bridge):
+    b, fake = bridge
     b.fader(0, 0.51)
-    b.escoa_uma_vez()
-    b.troca_banco(+1)
-    b.troca_banco(-1)
+    b.drain()
+    b.step_bank(+1)
+    b.step_bank(-1)
     b.fader(0, 0.95)
-    b.escoa_uma_vez()
-    assert d.valores["main"] == 0.51
+    b.drain()
+    assert fake.values["main"] == 0.51
 
 
-def test_rec_carrega_cena_e_marca_a_ativa(ponte):
-    b, d = ponte
+def test_rec_loads_a_scene_and_marks_it(bridge):
+    b, fake = bridge
     b.on_midi(mido.Message("note_on", note=mackie.REC + 1, velocity=127))
-    assert d.carregou == "OUTRA" and b.cena_ativa == 2
+    assert fake.loaded == "TWO" and b.scene_loaded == 2
 
 
-def test_cena_inexistente_nao_derruba(ponte):
-    b, _ = ponte
+def test_a_missing_scene_does_not_bring_it_down(bridge):
+    b, _ = bridge
     b.on_midi(mido.Message("note_on", note=mackie.REC + 5, velocity=127))
-    assert b.cena_ativa is None
+    assert b.scene_loaded is None
 
 
-def test_fader_sem_destino_e_ignorado(ponte):
-    b, _ = ponte
+def test_a_fader_with_no_destination_is_ignored(bridge):
+    b, _ = bridge
     b.fader(7, 0.5)
-    b.escoa_uma_vez()          # nao pode estourar
+    b.drain()                                  # must not raise
 
 
-def test_escrita_que_falha_nao_derruba_o_solo():
-    class Ruim(FakeDriver):
+def test_a_refused_write_does_not_abort_the_solo():
+    class Refusing(FakeDriver):
         def toggle(self, target):
             if target == "g2/mute":
-                raise RuntimeError("o daemon nao confirmou")
+                raise RuntimeError("the daemon did not confirm the write")
             return super().toggle(target)
 
-    d = Ruim()
-    b = daemon.Bridge(profile.parse_profile(PERFIL), drivers={"fake": d},
+    fake = Refusing()
+    b = daemon.Bridge(profile.parse_profile(PROFILE), drivers={"fake": fake},
                       log=lambda *a: None)
     b.solo(5)
-    assert b.solo_ativo == 5            # seguiu em frente apesar do erro
+    assert b.soloed == 5                       # carried on despite the failure
 
 
-def test_empurra_estado_manda_posicao_e_leds(ponte):
-    b, _ = ponte
-    enviados = []
-    b.enviar = lambda **k: enviados.append(k)
-    b.empurra_estado()
-    assert any(k["type"] == "pitchwheel" for k in enviados)
-    seleciona = [k for k in enviados
-                 if k["type"] == "note_on" and k["note"] == mackie.SELECT]
-    assert seleciona and seleciona[0]["velocity"] == mackie.ON
+def test_push_state_sends_positions_and_leds(bridge):
+    b, _ = bridge
+    sent = []
+    b.send = lambda **k: sent.append(k)
+    b.push_state()
+    assert any(k["type"] == "pitchwheel" for k in sent)
+    select = [k for k in sent if k["type"] == "note_on" and k["note"] == mackie.SELECT]
+    assert select and select[0]["velocity"] == mackie.ON

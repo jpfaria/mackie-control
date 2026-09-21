@@ -1,0 +1,35 @@
+# A full desk on a PreSonus Quantum HD 8, plus a second bank for the computer.
+#
+#   pip install 'mackie-control[hd8] @ git+https://github.com/jpfaria/mackie-control'
+#   mackie bridge examples/quantum-hd8.yaml
+#
+# Paths come from `quantum-hd8 dump` on YOUR interface -- channel numbers differ
+# between rigs, so read them there instead of copying these.
+#
+# Outputs and inputs are separate groups: soloing a guitar mutes the other
+# guitars and leaves the monitors alone.
+surface: smc-mixer
+
+banks:
+  - name: HD 8
+    faders:
+      # --- outputs ---
+      1: {driver: hd8, target: global/mainOutVolume,  label: MAIN,     group: out, mute: global/mute}
+      2: {driver: hd8, target: aux/ch10/volume,       label: FRFR,     group: out, mute: aux/ch10/mute}
+      3: {driver: hd8, target: global/phones1_volume, label: PHONES 1, group: out}   # no mute on the HD 8:
+      4: {driver: hd8, target: global/phones2_volume, label: PHONES 2, group: out}   # M zeroes and restores
+      # --- inputs ---
+      5: {driver: hd8, target: line/ch1/volume,  label: GUITAR 1, group: in, mute: line/ch1/mute}
+      6: {driver: hd8, target: line/ch2/volume,  label: GUITAR 2, group: in, mute: line/ch2/mute}
+      7: {driver: hd8, target: line/ch19/volume, label: GUITAR 3, group: in, mute: line/ch19/mute}
+      8: {driver: hd8, target: line/ch20/volume, label: GUITAR 4, group: in, mute: line/ch20/mute}
+    buttons:
+      rec: scene      # R n loads the n-th scene stored in the interface
+      select: bank    # the square button n selects bank n
+
+  - name: Mac
+    faders:
+      1: {driver: mac, label: System volume}
+      2: {driver: app, target: Spotify, label: Spotify}
+    buttons:
+      select: bank

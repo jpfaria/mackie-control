@@ -6,28 +6,28 @@ The surface speaks a standard protocol; a **profile** says what each fader and
 button touches; one **driver** per device does the writing.
 
 ```
-superficie (Mackie)  ->  Bridge  ->  driver  ->  aparelho
+surface (Mackie)  ->  Bridge  ->  driver  ->  gear
 ```
 
 Built because a PreSonus **Quantum HD 8 does not receive MIDI**: a sweep of CC,
 pitch bend and notes on both of its CoreMIDI ports changed none of its 1419
-parameters (measured 2026-09-20). A MIDI fader could never reach it directly —
-the computer has to translate.
+parameters (measured 2026-09-20). A MIDI fader can never reach it directly — the
+computer has to translate.
 
 ## Install
 
 ```bash
 pip install git+https://github.com/jpfaria/mackie-control
-pip install 'mackie-control[hd8] @ git+https://github.com/jpfaria/mackie-control'   # com o driver da HD 8
+pip install 'mackie-control[hd8] @ git+https://github.com/jpfaria/mackie-control'   # with the HD 8 driver
 ```
 
 ## Use
 
 ```bash
-mackie ports                         # portas MIDI visiveis agora
-mackie surfaces                      # superficies conhecidas
-mackie watch 30                      # imprime o que a superficie manda, decodificado
-mackie bridge meu-rig.yaml           # roda a ponte
+mackie ports                         # MIDI ports visible right now
+mackie surfaces                      # surfaces this package knows
+mackie watch 30                      # print what the surface sends, decoded
+mackie bridge my-rig.yaml            # run the bridge
 ```
 
 ## The profile
@@ -39,39 +39,39 @@ banks:
     faders:
       1: {driver: hd8, target: global/mainOutVolume, label: MAIN,    group: out, mute: global/mute}
       2: {driver: hd8, target: aux/ch10/volume,      label: FRFR,    group: out, mute: aux/ch10/mute}
-      3: {driver: hd8, target: global/phones1_volume, label: FONE 1, group: out}
-      5: {driver: hd8, target: line/ch1/volume,      label: GUITA 1, group: in,  mute: line/ch1/mute}
+      3: {driver: hd8, target: global/phones1_volume, label: PHONES 1, group: out}
+      5: {driver: hd8, target: line/ch1/volume,      label: GUITAR 1, group: in,  mute: line/ch1/mute}
     buttons: {rec: scene, select: bank}
   - name: Mac
     faders:
-      1: {driver: mac, label: Volume do Mac}
+      1: {driver: mac, label: System volume}
       2: {driver: app, target: Spotify, label: Spotify}
 ```
 
-Rig novo = arquivo novo. Nada do rig entra no código.
+A different rig is a different file. Nothing about a rig goes into the code.
 
-## O que cada campo faz
+## What each field does
 
-| Campo | Efeito |
+| Field | Effect |
 |---|---|
-| `driver` | quem escreve: `hd8`, `mac`, `app` |
-| `target` | o que esse driver entende (um path do mixer, o nome do app) |
-| `label` | o nome que aparece no log |
-| `group` | `in` ou `out` — **o solo só age dentro do grupo** |
-| `mute` | parâmetro de mute do aparelho; sem ele, o M zera o valor e devolve depois |
+| `driver` | who writes: `hd8`, `mac`, `app` |
+| `target` | whatever that driver understands (a mixer path, an app name) |
+| `label` | the name that shows up in the log |
+| `group` | `in` or `out` — **solo only acts inside the group** |
+| `mute` | the device's own mute parameter; without one, M zeroes the value and gives it back |
 
-## Documentação
+## Documentation
 
-- [`docs/bridge.md`](docs/bridge.md) — a ponte, os drivers, o perfil, o feedback
-- [`docs/smc-mixer.md`](docs/smc-mixer.md) — o M-VAVE SMC-Mixer, medido
-- [`docs/protocol.md`](docs/protocol.md) — Mackie Control como este repo o usa
-- [`docs/adding-a-surface.md`](docs/adding-a-surface.md) — mapear um controlador novo
-- [`docs/adding-a-driver.md`](docs/adding-a-driver.md) — controlar um aparelho novo
+- [`docs/bridge.md`](docs/bridge.md) — the bridge, the drivers, the profile, the feedback
+- [`docs/smc-mixer.md`](docs/smc-mixer.md) — the M-VAVE SMC-Mixer, as measured
+- [`docs/protocol.md`](docs/protocol.md) — Mackie Control as this repo uses it
+- [`docs/adding-a-surface.md`](docs/adding-a-surface.md) — mapping a new controller
+- [`docs/adding-a-driver.md`](docs/adding-a-driver.md) — controlling new gear
 
-## Testes
+## Tests
 
 ```bash
 python3 -m pytest -q
 ```
 
-36 testes, sem hardware: os drivers e a superfície entram por injeção.
+36 tests, no hardware: drivers and surfaces go in by injection.
