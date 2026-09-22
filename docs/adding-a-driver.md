@@ -31,9 +31,9 @@ Rules that came out of real bugs:
 
 - **Raise `Unsupported`, never crash.** The bridge logs it and carries on. One
   parameter the device refuses must not abort a whole solo.
-- **Say *why* it is unsupported.** `mac` answers "a saída padrão do Mac não tem
-  volume controlável pelo sistema (interface de áudio selecionada)" instead of
-  a stack trace — that message is the diagnosis.
+- **Say *why* it is unsupported.** `mac` answers "the Mac's default output has no
+  system-controlled volume (an audio interface is selected)" instead of a
+  stack trace — that message is the diagnosis.
 - **Take the connection by injection.** `HD8(client=...)` is what makes the
   tests run with no hardware; build the real one only when nothing is passed.
 - **Clamp what you write.** The bridge sends 0..1; the device decides what that

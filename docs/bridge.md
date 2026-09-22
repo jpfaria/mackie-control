@@ -19,6 +19,16 @@ A driver that cannot do something raises `Unsupported`; the bridge logs it and
 carries on. One channel the device refuses must never abort a solo — that bug
 cost an evening on 2026-09-21.
 
+### Losing the gear and getting it back
+
+Switching the HD 8 off and on again kills the UCNet session, and the library
+does not notice: afterwards every write raises `OSError: Bad file descriptor`
+while reads keep answering from a **stale cache**, so the bridge looks alive
+and moves nothing (measured 2026-09-22). The `hd8` driver therefore reconnects
+**once per operation** and retries it; if `ucdaemon` still refuses, that one
+operation becomes `Unsupported` and the bridge carries on. Power-cycling the
+interface no longer means restarting the bridge.
+
 ## Profile
 
 ```yaml

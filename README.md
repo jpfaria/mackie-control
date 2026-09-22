@@ -93,4 +93,4 @@ they nudge, so they need none of that.
 python3 -m pytest -q
 ```
 
-36 tests, no hardware: drivers and surfaces go in by injection.
+71 tests, no hardware: drivers and surfaces go in by injection.

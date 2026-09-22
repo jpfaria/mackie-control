@@ -2,7 +2,7 @@
 
 Control surface, not a pedal: 8 faders, 8 endless encoders, 43 buttons, USB-C
 and BLE, 780 mAh battery. It does **not** speak M-EFCS — in DAW mode it speaks
-**Mackie Control**, which is `mvave/mackie.py`.
+**Mackie Control**, which is `mackie/protocol.py`.
 
 Everything below was measured on 2026-09-21 with the device on Bluetooth.
 
@@ -34,7 +34,7 @@ matches** — the fader has no motor.
   pages the host's 8-track window.
 - **No position report.** The Mackie Device Query (`F0 00 00 66 14 00 F7`) gets
   no fader positions back, so a host cannot ask where the faders are. That is
-  why `mvave.bridge` uses soft takeover: a fader only starts writing once it
+  why the bridge uses soft takeover: a fader only starts writing once it
   crosses the current value, otherwise touching it would jump the volume.
 - Shift blinking on its own is the **low-battery** warning (manual).
 - The configuration app (MidiSuite) is Windows-only, and as of 21/09 the
