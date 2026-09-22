@@ -51,6 +51,7 @@ pip show mackie-control | grep -i version
 mackie ports                         # MIDI ports visible right now
 mackie surfaces                      # surfaces this package knows
 mackie watch 30                      # print what the surface sends, decoded
+mackie devices my-rig.yaml           # the devices and the scenes each can load
 mackie bridge my-rig.yaml            # run the bridge
 ```
 
@@ -93,13 +94,18 @@ A different rig is a different file. Nothing about a rig goes into the code.
 | `range` | `[low, high]` in 0..1 — the fader's whole travel stays inside it (a preamp reaching +75 dB is a blown take) |
 | `takeover` | `false` waives the takeover for that destination |
 
+◀ / ▶ pages the current device's scenes and loads each on the press. Neither
+arrow pair wraps. The R row shows which row of eight you are on, the square row
+the device's column, the mute row the scene's — only whatever just changed.
+
 Faders jump to a position, so they wait for **takeover**: a fader starts writing
 only once it crosses the value already in the gear. Encoders are endless knobs —
 they nudge, so they need none of that.
 
 | Block | What it holds |
 |---|---|
-| `banks:` | the list of banks; page through them with Channel ◀ / ▶ or the arrows, any number of them |
+| `banks:` | the list of devices; ▲ / ▼ or Channel ◀ / ▶ moves between them, any number |
+| `scenes:` | which scenes of that device, in which order; left out, the device's own list |
 | `global:` | faders, encoders and transport that work in **every** bank (a global fader wins over the bank's) |
 | `positions: true` | send fader values back, so the surface blinks a channel until its fader matches (off by default) |
 
@@ -117,4 +123,4 @@ they nudge, so they need none of that.
 python3 -m pytest -q
 ```
 
-71 tests, no hardware: drivers and surfaces go in by injection.
+92 tests, no hardware: drivers and surfaces go in by injection.

@@ -117,7 +117,9 @@ def test_bank_buttons(bridge):
     b, _ = bridge
     b.on_midi(mido.Message("note_on", note=mackie.BANK_RIGHT, velocity=127))
     assert b.bank.name == "mac"
-    b.on_midi(mido.Message("note_on", note=mackie.ARROW_LEFT, velocity=127))
+    # Since 2026-09-22 the side arrows are scenes; the device moves on the
+    # vertical pair and on Channel.
+    b.on_midi(mido.Message("note_on", note=mackie.ARROW_UP, velocity=127))
     assert b.bank.name == "rig"
     b.on_midi(mido.Message("note_on", note=mackie.SELECT + 1, velocity=127))
     assert b.bank.name == "rig"          # square does nothing without select: bank
@@ -312,7 +314,7 @@ def test_bank_change_blinks_row_and_column_three_times():
     b.send = lambda **k: sent.append(k)
     b.bank_index = 11                       # linha 1, coluna 3
     b.flash_bank(sleep=lambda s: None)
-    assert _acesos(sent, mackie.MUTE) == [1] * daemon.BLINKS
+    assert _acesos(sent, mackie.REC) == [1] * daemon.BLINKS
     assert _acesos(sent, mackie.SELECT) == [3] * daemon.BLINKS
 
 
@@ -324,7 +326,7 @@ def test_the_blink_touches_only_its_own_cell():
     b.bank_index = 11
     b.flash_bank(sleep=lambda s: None)
     fase_do_blink = sent[:daemon.BLINKS * 2 * 2]      # on+off, duas notas cada
-    assert {k["note"] for k in fase_do_blink} == {mackie.MUTE + 1, mackie.SELECT + 3}
+    assert {k["note"] for k in fase_do_blink} == {mackie.REC + 1, mackie.SELECT + 3}
 
 
 def test_beyond_64_banks_there_is_nothing_to_flash():
@@ -478,3 +480,112 @@ def test_a_bad_range_is_refused():
         with pytest.raises(SystemExit):
             profile.parse_profile({"banks": [{"faders": {
                 1: {"driver": "fake", "target": "x", "range": ruim}}}]})
+
+
+# -- devices and scenes on the surface (spec 2026-09-22) ----------------------
+
+SCENES = {"banks": [
+    {"name": "HD 8", "driver": "fake", "faders": {1: {"driver": "fake", "target": "main"}}},
+    {"name": "Mac", "faders": {1: {"driver": "fake", "target": "main"}}},
+    {"name": "Third", "faders": {1: {"driver": "fake", "target": "main"}}},
+]}
+
+
+@pytest.fixture
+def rig():
+    fake = FakeDriver()
+    b = daemon.Bridge(profile.parse_profile(SCENES), send=lambda **k: None,
+                      drivers={"fake": fake}, log=lambda *a: None)
+    return b, fake
+
+
+NOTES = {"arrow_left": mackie.ARROW_LEFT, "arrow_right": mackie.ARROW_RIGHT,
+         "arrow_up": mackie.ARROW_UP, "arrow_down": mackie.ARROW_DOWN}
+
+
+def _press(b, kind, channel=0):
+    b.button(mackie.Button(note=NOTES[kind], pressed=True))
+
+
+def test_the_right_arrow_loads_the_next_scene(rig):
+    b, fake = rig
+    _press(b, "arrow_right")
+    assert fake.loaded == "ONE"
+    _press(b, "arrow_right")
+    assert fake.loaded == "TWO"
+
+
+def test_the_left_arrow_loads_the_previous_scene(rig):
+    b, fake = rig
+    _press(b, "arrow_right")
+    _press(b, "arrow_right")
+    _press(b, "arrow_left")
+    assert fake.loaded == "ONE"
+
+
+def test_the_scenes_do_not_wrap_around(rig):
+    b, fake = rig
+    for _ in range(5):
+        _press(b, "arrow_right")
+    assert fake.loaded == "TWO"           # the driver has two, and it stops there
+    for _ in range(5):
+        _press(b, "arrow_left")
+    assert fake.loaded == "ONE"
+
+
+def test_the_up_and_down_arrows_change_device(rig):
+    b, _ = rig
+    _press(b, "arrow_down")
+    assert b.bank_index == 1
+    _press(b, "arrow_up")
+    assert b.bank_index == 0
+
+
+def test_the_devices_do_not_wrap_around(rig):
+    b, _ = rig
+    for _ in range(5):
+        _press(b, "arrow_up")
+    assert b.bank_index == 0
+    for _ in range(5):
+        _press(b, "arrow_down")
+    assert b.bank_index == 2
+
+
+def test_a_device_with_no_scenes_ignores_the_side_arrows():
+    b = daemon.Bridge(profile.parse_profile({"banks": [{"name": "empty", "faders": {}}]}),
+                      log=lambda *a: None)
+    sent = []
+    b.send = lambda **k: sent.append(k)
+    _press(b, "arrow_right")
+    assert b.scene_index is None
+
+
+def test_the_profile_chooses_which_scenes_and_in_which_order():
+    chosen = {"banks": [{"name": "HD 8", "driver": "fake", "scenes": ["TWO"],
+                         "faders": {1: {"driver": "fake", "target": "main"}}}]}
+    fake = FakeDriver()
+    b = daemon.Bridge(profile.parse_profile(chosen), send=lambda **k: None,
+                      drivers={"fake": fake}, log=lambda *a: None)
+    assert b.scene_names() == ["TWO"]
+    _press(b, "arrow_right")
+    assert fake.loaded == "TWO"
+
+
+def test_changing_device_shows_it_on_the_r_row_and_the_square_column():
+    muitos = {"banks": [{"name": f"b{i}", "faders": {}} for i in range(20)]}
+    b = daemon.Bridge(profile.parse_profile(muitos), log=lambda *a: None)
+    sent = []
+    b.send = lambda **k: sent.append(k)
+    b.bank_index = 11                       # row 1, column 3
+    b.flash_number(b.bank_index, mackie.SELECT, sleep=lambda s: None)
+    assert _acesos(sent, mackie.REC) == [1] * daemon.BLINKS
+    assert _acesos(sent, mackie.SELECT) == [3] * daemon.BLINKS
+
+
+def test_changing_scene_shows_it_on_the_r_row_and_the_mute_column(rig):
+    b, _ = rig
+    sent = []
+    b.send = lambda **k: sent.append(k)
+    b.flash_number(9, mackie.MUTE, sleep=lambda s: None)   # row 1, column 1
+    assert _acesos(sent, mackie.REC) == [1] * daemon.BLINKS
+    assert _acesos(sent, mackie.MUTE) == [1] * daemon.BLINKS

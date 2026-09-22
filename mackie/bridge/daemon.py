@@ -30,6 +30,7 @@ class Bridge:
         self.muted_before = {}      # mute state before a solo, per fader
         self.value_before = {}      # value of targets silenced without a mute
         self.scene_loaded = None    # fader whose scene was loaded last
+        self.scene_index = None     # position in the device's scene list
         self.took_over = set()      # (bank, channel) already in control
         self.last_seen = {}         # last position seen per fader
         self.pending = {}
@@ -73,7 +74,55 @@ class Bridge:
         return self.profile.globals.faders.get(fader) or self.bank.faders.get(fader)
 
     def step_bank(self, step):
-        self.select_bank((self.bank_index + step) % len(self.profile.banks))
+        """Stop at the ends instead of wrapping: one press too many must not
+        put the rig in a device the user was walking away from."""
+        self.select_bank(min(len(self.profile.banks) - 1,
+                             max(0, self.bank_index + step)))
+
+    # -- scenes ----------------------------------------------------------------
+    def scene_names(self):
+        """Which scenes this device offers, in order: the profile's list when
+        it has one, otherwise whatever the device itself reports."""
+        if self.bank.scenes:
+            return list(self.bank.scenes)
+        name = self.bank.driver or self.bank_driver()
+        if name is None:
+            return []
+        try:
+            return list(self.driver(name).scenes())
+        except Exception:
+            return []
+
+    def step_scene(self, step):
+        """Page through the device's scenes, loading each as it is reached --
+        João asked for it to load on the press (2026-09-22), the way a
+        pedalboard behaves. The ends hold."""
+        names = self.scene_names()
+        if not names:
+            return
+        start = 0 if self.scene_index is None else self.scene_index + step
+        i = min(len(names) - 1, max(0, start))
+        if self.load_scene_at(i):
+            self.flash_number(i, mackie.MUTE)
+
+    def load_scene_at(self, i):
+        names = self.scene_names()
+        name = self.bank.driver or self.bank_driver()
+        if name is None or not 0 <= i < len(names):
+            return False
+        try:
+            drv = self.driver(name)
+            todas = list(drv.scenes())
+            drv.load_scene(todas.index(names[i]) if names[i] in todas else i)
+        except Exception as e:
+            self.log(f"  !! scene {names[i]}: {e}")
+            return False
+        self.scene_index = i
+        self.soloed, self.muted_before = None, {}
+        self.took_over.clear()
+        self.log(f"  -> scene {i + 1}/{len(names)}: {names[i]}")
+        self.push_state()
+        return True
 
     def select_bank(self, i):
         if 0 <= i < len(self.profile.banks):
@@ -84,28 +133,33 @@ class Bridge:
             self.flash_bank()
 
     def flash_bank(self, sleep=None):
-        """Flash the bank number without blocking the MIDI loop."""
+        self.flash_number(self.bank_index, mackie.SELECT, sleep=sleep)
+
+    def flash_number(self, n, column_row, sleep=None):
+        """Show a number without blocking the MIDI loop."""
         if sleep is None:
-            threading.Thread(target=self._flash, args=(time.sleep,),
+            threading.Thread(target=self._flash, args=(n, column_row, time.sleep),
                              daemon=True).start()
         else:
-            self._flash(sleep)
+            self._flash(n, column_row, sleep)
 
-    def _flash(self, sleep):
-        """Show which bank is now active, then get out of the way.
+    def _flash(self, n, column_row, sleep):
+        """Show a number as a grid, then get out of the way.
 
-        The surface has no display and the banks are a list of any length, so
-        the number is shown as a grid: the top row of a channel strip (the mute
-        button, right under the knob) is the row, the square button at the
-        bottom is the column. Eight by eight addresses 64 banks. It is a flash,
-        not a state: `push_state` puts the real LEDs back right after."""
-        row, column = divmod(self.bank_index, 8)
+        The surface has no display and 32 lamps in four rows of eight (measured
+        2026-09-22; the knob has none of its own). So a number up to 64 is a
+        row and a column: the **R row** is the row of eight, and the column row
+        says which number it is -- the square for the device, the mute row for
+        the scene. Only the one that just changed is shown, because the R row
+        cannot carry two numbers at once. It is a flash, not a state:
+        `push_state` puts the real LEDs back right after."""
+        row, column = divmod(n, 8)
         if row > 7:                       # beyond 64 banks there is nothing to show
             return
         for _ in range(BLINKS):
             for aceso in (True, False):
-                self.send(**mackie.led(mackie.MUTE + row, aceso))
-                self.send(**mackie.led(mackie.SELECT + column, aceso))
+                self.send(**mackie.led(mackie.REC + row, aceso))
+                self.send(**mackie.led(column_row + column, aceso))
                 sleep(BLINK)
         self.push_state()                 # real LEDs come back
 
@@ -303,9 +357,13 @@ class Bridge:
 
     def button(self, b):
         actions = self.bank.buttons
-        if b.kind in ("bank_right", "arrow_right"):
+        if b.kind == "arrow_right":
+            self.step_scene(+1)
+        elif b.kind == "arrow_left":
+            self.step_scene(-1)
+        elif b.kind in ("bank_right", "arrow_down"):
             self.step_bank(+1)
-        elif b.kind in ("bank_left", "arrow_left"):
+        elif b.kind in ("bank_left", "arrow_up"):
             self.step_bank(-1)
         elif b.kind == "mute":
             self.mute(b.channel + 1)

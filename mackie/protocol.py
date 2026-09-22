@@ -14,6 +14,8 @@ REC, SOLO, MUTE, SELECT = 0x00, 0x08, 0x10, 0x18
 BANK_LEFT, BANK_RIGHT = 0x2E, 0x2F
 REWIND, FORWARD, STOP, PLAY, RECORD = 0x5B, 0x5C, 0x5D, 0x5E, 0x5F
 ARROW_LEFT, ARROW_RIGHT = 0x62, 0x63
+# Measured on the SMC-Mixer 2026-09-22: the vertical pair sends too.
+ARROW_UP, ARROW_DOWN = 0x60, 0x61
 
 VPOT = 0x10             # encoder n = CC VPOT + n
 FADER_MAX = 16383
@@ -54,6 +56,7 @@ class Button:
                 return name
         return {BANK_LEFT: "bank_left", BANK_RIGHT: "bank_right",
                 ARROW_LEFT: "arrow_left", ARROW_RIGHT: "arrow_right",
+                ARROW_UP: "arrow_up", ARROW_DOWN: "arrow_down",
                 REWIND: "rewind", FORWARD: "forward", STOP: "stop",
                 PLAY: "play", RECORD: "record"}.get(self.note, "unknown")
 

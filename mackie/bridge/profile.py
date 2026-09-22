@@ -66,6 +66,14 @@ class Command:
 @dataclass(frozen=True)
 class Bank:
     name: str
+    # The device this bank is, when its buttons and scenes belong to one: the
+    # driver whose scenes the arrows page through. Left out, it is the driver
+    # most of the bank's faders use.
+    driver: str | None = None
+    # Which scenes of that device, in which order. Left out, the device's own
+    # list is used: the profile speaks up only when a night needs four of the
+    # thirty presets the gear holds.
+    scenes: list[str] = field(default_factory=list)
     faders: dict[int, Destination] = field(default_factory=dict)
     encoders: dict[int, Destination] = field(default_factory=dict)
     buttons: dict[str, str] = field(default_factory=dict)
@@ -135,6 +143,8 @@ def parse_profile(data: dict) -> Profile:
                      transport={k: _command(v)
                                 for k, v in (g.get("transport") or {}).items()}),
         banks=[Bank(name=b.get("name", f"bank {i + 1}"),
+                    driver=b.get("driver"),
+                    scenes=list(b.get("scenes") or []),
                     faders={int(k): _destination(v) for k, v in (b.get("faders") or {}).items()},
                     encoders={int(k): _destination(v)
                               for k, v in (b.get("encoders") or {}).items()},

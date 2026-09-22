@@ -34,3 +34,12 @@ def test_round_trip_of_a_fader_position():
 def test_led_kwargs_build_a_valid_message():
     assert mido.Message(**mackie.led(mackie.SELECT + 1, True)).velocity == 127
     assert mido.Message(**mackie.led(mackie.SELECT + 1, False)).velocity == 0
+
+
+def test_the_up_and_down_arrows_decode():
+    """Measured on the SMC-Mixer 2026-09-22: notes 60 and 61."""
+    import mido
+
+    from mackie import protocol
+    assert protocol.decode(mido.Message("note_on", note=0x60, velocity=127)).kind == "arrow_up"
+    assert protocol.decode(mido.Message("note_on", note=0x61, velocity=127)).kind == "arrow_down"

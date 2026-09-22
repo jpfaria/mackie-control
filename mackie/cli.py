@@ -48,6 +48,25 @@ def cmd_watch(a):
             time.sleep(0.01)
 
 
+def cmd_devices(a):
+    """What each bank is: its device, its faders and the scenes it can load."""
+    from .bridge import describe as desc
+    from .bridge.drivers import build
+    from .bridge.profile import load_profile
+
+    profile = load_profile(a.profile)
+    drivers = {}
+    for bank in profile.banks:
+        name = bank.driver or desc._main_driver(bank)
+        if name is not None and name not in drivers:
+            try:
+                drivers[name] = build(name)
+            except Exception:
+                drivers[name] = None
+    for line in desc.describe(profile, drivers=drivers):
+        print(line)
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="mackie", description=__doc__)
     sub = ap.add_subparsers(dest="cmd")
@@ -62,6 +81,10 @@ def main(argv=None):
 
     s = sub.add_parser("ports", help="MIDI ports visible right now")
     s.set_defaults(fn=cmd_ports)
+
+    s = sub.add_parser("devices", help="what each bank is and which scenes it can load")
+    s.add_argument("profile")
+    s.set_defaults(fn=cmd_devices)
 
     s = sub.add_parser("watch", help="print decoded messages from a surface (mapping a new one)")
     s.add_argument("seconds", type=int, nargs="?", default=30)

@@ -75,6 +75,45 @@ fights with where the control physically sits.
 Controlling the music has nothing to do with which set of faders you are on —
 without this, play does nothing while you are looking at the mixer bank.
 
+## Devices and scenes
+
+A bank is a device. The arrows move through both:
+
+| Control | Does |
+|---|---|
+| ◀ / ▶ (notes `62`/`63`) | previous / next **scene** — loads it on the press |
+| ▲ / ▼ (notes `60`/`61`) | previous / next **device** |
+| Channel ◀ / ▶ | pages devices too, unchanged |
+
+Neither wraps: one press too many must not put the rig somewhere it was
+walking away from.
+
+```yaml
+banks:
+  - name: HD 8
+    driver: hd8                        # the device this bank is
+    scenes: [MIXER-ON, SYN2-FRFR]      # optional: which, and in which order
+```
+
+Without `scenes:` the device's own list is used, in the order it reports. With
+it, the profile chooses — the gear may hold thirty presets of which four matter
+tonight, and that choice belongs to the user, never to the code.
+
+**Where am I**: the surface has 32 lamps, four rows of eight, and the knob has
+none of its own (measured 2026-09-22). So a number up to 64 is a row and a
+column: the **R row** is the row of eight, the **square row** is the column of
+a device, the **mute row** the column of a scene. Only what just changed is
+shown — the R row cannot carry two numbers at once — and the real mute and solo
+LEDs come straight back after the flash.
+
+`mackie devices PROFILE.yaml` prints the same thing in words, and works with
+the gear switched off:
+
+```
+1  HD 8     (hd8)   8 faders   scenes: 1 ELEMENT  2 MIXER-ON  3 MK300-FRFR
+2  Mac      (mac)   2 faders   no scenes
+```
+
 ## Losing the surface and getting it back
 
 Switching the surface off takes its port out of CoreMIDI **without any error
