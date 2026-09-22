@@ -187,8 +187,10 @@ class Bridge:
         ultimo = len(self.profile.banks) - 1
         cenas = len(self.scene_names())
         atual = -1 if self.scene_index is None else self.scene_index
-        self.send(**mackie.led(mackie.ARROW_UP, self.bank_index > 0))
-        self.send(**mackie.led(mackie.ARROW_DOWN, self.bank_index < ultimo))
+        for nota in (mackie.ARROW_UP, mackie.BANK_LEFT):
+            self.send(**mackie.led(nota, self.bank_index > 0))
+        for nota in (mackie.ARROW_DOWN, mackie.BANK_RIGHT):
+            self.send(**mackie.led(nota, self.bank_index < ultimo))
         self.send(**mackie.led(mackie.ARROW_LEFT, cenas > 0 and atual > 0))
         self.send(**mackie.led(mackie.ARROW_RIGHT, cenas > 0 and atual < cenas - 1))
 

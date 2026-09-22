@@ -794,3 +794,14 @@ def test_the_scene_arrows_are_dark_on_a_device_with_no_scenes():
     acesos = {k["note"]: k["velocity"] for k in sent}
     assert acesos[mackie.ARROW_LEFT] == mackie.OFF
     assert acesos[mackie.ARROW_RIGHT] == mackie.OFF
+
+
+def test_channel_left_and_right_light_like_the_vertical_arrows(rig):
+    """Channel ◀/▶ pages devices too, so it says the same thing."""
+    b, _ = rig
+    sent = []
+    b.send = lambda **k: sent.append(k)
+    b.push_state()
+    acesos = {k["note"]: k["velocity"] for k in sent}
+    assert acesos[mackie.BANK_LEFT] == mackie.OFF     # first device
+    assert acesos[mackie.BANK_RIGHT] == mackie.ON
