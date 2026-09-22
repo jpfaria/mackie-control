@@ -158,19 +158,22 @@ class Bridge:
         row, column = divmod(n, 8)
         if row > 7:                       # beyond 64 there is nothing to show
             return
+        # The row is always shown: not showing it was worse than the blink it
+        # avoids (2026-09-22, "a luz que marca a linha NAO esta acendendo").
+        #
         # The surface compares what it is sent against **where the physical
-        # fader is**, so the only value that stops the blink is the last
-        # position that fader itself reported. The gear's own value does not
-        # stop it: measured 2026-09-22, the knob blinked on and on. With no
-        # report yet for that channel the row is not shown at all -- a knob
-        # blinking for ever is worse than no number.
-        home = self.last_seen.get((self.bank_index, row))
-        if home is not None:
-            self.send(**mackie.fader_position(row, 0.0))
+        # fader is**, so the lamp blinks until the two agree, and the only
+        # value that settles it is the last position that fader itself
+        # reported -- the gear's own value does not (measured the same day).
+        # Until that channel has been touched there is nothing to send, so the
+        # row stays blinking: a moving lamp on the right channel still says
+        # which row you are on, and one touch of that fader stops it.
+        self.send(**mackie.fader_position(row, 0.0))
         for _ in range(BLINKS):
             for aceso in (True, False):
                 self.send(**mackie.led(column_row + column, aceso))
                 sleep(BLINK)
+        home = self.last_seen.get((self.bank_index, row))
         if home is not None:
             self.send(**mackie.fader_position(row, home))
         self.push_state()                 # real LEDs come back

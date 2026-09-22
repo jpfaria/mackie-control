@@ -624,13 +624,14 @@ def test_the_knob_lamp_is_handed_back_where_the_fader_really_is(bridge):
     assert bends[1] == mackie.fader_position(1, 0.4)    # e devolve o fader
 
 
-def test_a_row_with_nothing_to_read_is_left_dark_instead_of_blinking():
-    """Nothing to hand back means the blink would never stop, so that row is
-    not shown at all: a knob blinking for ever is worse than no number."""
+def test_a_row_is_shown_even_before_that_fader_has_been_touched():
+    """It blinks until someone touches that fader, and a blinking lamp on the
+    right channel still says which row you are on. Showing nothing did not."""
     muitos = {"banks": [{"name": f"b{i}", "faders": {}} for i in range(20)]}
     b = daemon.Bridge(profile.parse_profile(muitos), log=lambda *a: None)
     sent = []
     b.send = lambda **k: sent.append(k)
-    b.bank_index = 11
+    b.bank_index = 11                       # linha 1
     b.flash_bank(sleep=lambda s: None)
-    assert not [k for k in sent if k["type"] == "pitchwheel"]
+    bends = [k for k in sent if k["type"] == "pitchwheel"]
+    assert bends and bends[0]["channel"] == 1
