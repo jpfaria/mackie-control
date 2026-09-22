@@ -7,9 +7,12 @@
     "name": "João Paulo Faria",
     "email": "jpfaria@gmail.com"
   },
-  "keywords": ["mackie", "midi", "control-surface", "audio", "mixer"],
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/jpfaria/mackie-control"
-  }
+  "keywords": [
+    "mackie",
+    "midi",
+    "control-surface",
+    "audio",
+    "mixer"
+  ],
+  "repository": "https://github.com/jpfaria/mackie-control"
 }
