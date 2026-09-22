@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mackie-control"
-version = "0.1.0"
+version = "0.2.0"
 description = "Mackie Control surfaces driving any gear: protocol, surface profiles, and a bridge with one driver per device"
 readme = "README.md"
 requires-python = ">=3.11"

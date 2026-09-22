@@ -21,6 +21,15 @@ pip install git+https://github.com/jpfaria/mackie-control
 pip install 'mackie-control[hd8] @ git+https://github.com/jpfaria/mackie-control'   # with the HD 8 driver
 ```
 
+**Upgrading needs `--force-reinstall`** unless the version in `pyproject.toml`
+changed: `pip install -U` compares version strings, not commits, so it clones
+the new commit, sees the same version and installs nothing — silently leaving
+the old code in place (2026-09-22: a fixed bug came back twice this way).
+
+```bash
+pip install --force-reinstall --no-deps git+https://github.com/jpfaria/mackie-control
+```
+
 ## Use
 
 ```bash
