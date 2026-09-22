@@ -141,6 +141,8 @@ class Bridge:
         if dest is None:
             return
         key = (self.bank_index, channel)
+        if not dest.takeover:
+            self.took_over.add(key)
         if key not in self.took_over:
             current = self._read(dest)
             previous = self.last_seen.get(key)

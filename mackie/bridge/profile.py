@@ -46,6 +46,9 @@ class Destination:
     label: str = ""
     group: str = "out"
     mute: str | None = None
+    # Takeover protects gear where a jump hurts (a monitor bus). For a player's
+    # own volume it is just friction, so a destination can waive it.
+    takeover: bool = True
 
 
 @dataclass(frozen=True)
@@ -86,7 +89,8 @@ def _destination(raw: dict) -> Destination:
         raise SystemExit(f"destination without a driver: {raw}")
     return Destination(driver=raw["driver"], target=raw.get("target"),
                        label=raw.get("label", raw.get("target", "")),
-                       group=raw.get("group", "out"), mute=raw.get("mute"))
+                       group=raw.get("group", "out"), mute=raw.get("mute"),
+                       takeover=bool(raw.get("takeover", True)))
 
 
 def _command(raw: dict) -> Command:

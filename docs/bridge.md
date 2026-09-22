@@ -72,6 +72,9 @@ never applies a fader until it **crosses the current value** (or starts within
 2% of it). Without that, touching a fader would jump the volume to wherever the
 knob happened to be sitting. Changing banks arms takeover again.
 
+A destination can waive it with `takeover: false` — right for a player's own
+volume, where a jump costs nothing, and wrong for a monitor bus.
+
 ## Feedback
 
 On every bank change, scene load, mute and solo the bridge pushes state back:

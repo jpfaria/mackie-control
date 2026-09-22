@@ -431,3 +431,15 @@ def test_a_global_encoder_works_in_every_bank():
 def test_an_unmapped_encoder_is_ignored(bridge):
     b, fake = bridge
     b.on_midi(mido.Message("control_change", control=mackie.VPOT + 3, value=1))   # no raise
+
+
+def test_a_destination_can_waive_takeover():
+    fake = FakeDriver()
+    perfil = {"banks": [{"name": "app", "faders": {
+        1: {"driver": "fake", "target": "main", "label": "SPOTIFY",
+            "takeover": False}}}]}
+    b = daemon.Bridge(profile.parse_profile(perfil), drivers={"fake": fake},
+                      log=lambda *a: None)
+    b.fader(0, 0.05)                 # main esta em 0.5: sem takeover, escreve ja
+    b.drain()
+    assert fake.values["main"] == 0.05
