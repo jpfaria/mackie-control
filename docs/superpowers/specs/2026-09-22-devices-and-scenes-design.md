@@ -27,21 +27,26 @@ puts the rig somewhere it has never been.
 
 ## Where am I
 
-The surface has four LED rows (M, S, R, □) of eight. Two numbers have to be
-readable at a glance, and each needs a row and a column to reach 64:
+The surface has 32 lamps and no more: four rows of eight (R, S, M, square).
+The knob has none of its own — CC `30`-`37` and notes `20`-`27` light nothing
+(measured 2026-09-22). So a number from 1 to 64 costs two rows: one for the row
+of eight, one for the column.
 
-| Row | Shows |
+| Lamps | Says |
 |---|---|
-| □ | device: which group of eight |
-| M | device: which of the eight (M is the button under the knob) |
-| R | scene: which group of eight |
-| S | scene: which of the eight |
+| R row | the row of eight — the same lamps the bridge already lights on a scene load |
+| square row | column, when the **device** is what changed |
+| M row | column, when the **scene** is what changed |
 
-Device 1 is `□1 M1`; device 12 is `□2 M4`. Nothing blinks and there is no mode
-to enter: the four rows always say where the rig is.
+**Only the one that just changed is shown** (João, 2026-09-22): the R row is
+shared, so it cannot carry two numbers at once. Pressing ▲/▼ shows the device,
+pressing ◀/▶ shows the scene, and the display stays as it is until something
+changes again.
 
-This replaces the three blinks of the bank number, which said the same thing
-more slowly and only right after a change.
+Device 12 is `R2` + `square4`. Scene 5 of that device is `R1` + `M5`.
+
+This replaces the three blinks of the bank number, which said less and only
+right after a change.
 
 ## The profile
 
