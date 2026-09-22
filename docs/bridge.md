@@ -72,7 +72,14 @@ never applies a fader until it **crosses the current value** (or starts within
 2% of it). Without that, touching a fader would jump the volume to wherever the
 knob happened to be sitting. Changing banks arms takeover again.
 
-A destination can waive it with `takeover: false` — right for a player's own
+### Range
+
+`range: [low, high]` keeps the whole fader travel inside a stretch of the
+parameter. A preamp reaches +75 dB, so a fader at the top with no limit is a
+blown take; `range: [0.2, 0.5]` makes the fader sweep only that part, and the
+value is read back on the fader's own scale.
+
+A destination can waive takeover with `takeover: false` — right for a player's own
 volume, where a jump costs nothing, and wrong for a monitor bus.
 
 ## Feedback

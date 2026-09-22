@@ -66,6 +66,8 @@ A different rig is a different file. Nothing about a rig goes into the code.
 | `label` | the name that shows up in the log |
 | `group` | `in` or `out` — **solo only acts inside the group** |
 | `mute` | the device's own mute parameter; without one, M zeroes the value and gives it back |
+| `range` | `[low, high]` in 0..1 — the fader's whole travel stays inside it (a preamp reaching +75 dB is a blown take) |
+| `takeover` | `false` waives the takeover for that destination |
 
 Faders jump to a position, so they wait for **takeover**: a fader starts writing
 only once it crosses the value already in the gear. Encoders are endless knobs —

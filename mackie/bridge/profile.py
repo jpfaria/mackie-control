@@ -49,6 +49,11 @@ class Destination:
     # Takeover protects gear where a jump hurts (a monitor bus). For a player's
     # own volume it is just friction, so a destination can waive it.
     takeover: bool = True
+    # The stretch of the parameter the fader is allowed to reach, as
+    # [low, high] in 0..1. A preamp goes to +75 dB: a fader at the top with no
+    # limit is a blown take, so a destination can keep the whole travel inside
+    # a safe range.
+    range: tuple[float, float] = (0.0, 1.0)
 
 
 @dataclass(frozen=True)
@@ -84,13 +89,26 @@ class Profile:
         return self.banks[i % len(self.banks)]
 
 
+def _range(raw) -> tuple[float, float]:
+    if raw is None:
+        return (0.0, 1.0)
+    try:
+        low, high = (float(x) for x in raw)
+    except (TypeError, ValueError):
+        raise SystemExit(f"range must be [low, high] in 0..1: {raw!r}")
+    if not (0.0 <= low < high <= 1.0):
+        raise SystemExit(f"range must be 0 <= low < high <= 1: {raw!r}")
+    return (low, high)
+
+
 def _destination(raw: dict) -> Destination:
     if "driver" not in raw:
         raise SystemExit(f"destination without a driver: {raw}")
     return Destination(driver=raw["driver"], target=raw.get("target"),
                        label=raw.get("label", raw.get("target", "")),
                        group=raw.get("group", "out"), mute=raw.get("mute"),
-                       takeover=bool(raw.get("takeover", True)))
+                       takeover=bool(raw.get("takeover", True)),
+                       range=_range(raw.get("range")))
 
 
 def _command(raw: dict) -> Command:

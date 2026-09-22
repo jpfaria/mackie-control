@@ -443,3 +443,38 @@ def test_a_destination_can_waive_takeover():
     b.fader(0, 0.05)                 # main esta em 0.5: sem takeover, escreve ja
     b.drain()
     assert fake.values["main"] == 0.05
+
+
+RANGE = {"banks": [{"name": "r", "faders": {
+    1: {"driver": "fake", "target": "main", "label": "GAIN",
+        "range": [0.2, 0.6], "takeover": False}}}]}
+
+
+def test_a_range_keeps_the_whole_travel_inside_it():
+    fake = FakeDriver()
+    b = daemon.Bridge(profile.parse_profile(RANGE), drivers={"fake": fake},
+                      log=lambda *a: None)
+    b.fader(0, 1.0)
+    b.drain()
+    assert fake.values["main"] == pytest.approx(0.6)      # topo do fader = topo do range
+    b.fader(0, 0.0)
+    b.drain()
+    assert fake.values["main"] == pytest.approx(0.2)
+    b.fader(0, 0.5)
+    b.drain()
+    assert fake.values["main"] == pytest.approx(0.4)
+
+
+def test_a_ranged_value_is_read_back_on_the_faders_scale():
+    fake = FakeDriver()
+    fake.values["main"] = 0.4
+    b = daemon.Bridge(profile.parse_profile(RANGE), drivers={"fake": fake},
+                      log=lambda *a: None)
+    assert b._read(b.destination(1)) == pytest.approx(0.5)
+
+
+def test_a_bad_range_is_refused():
+    for ruim in ([0.5, 0.5], [0.8, 0.2], [-1, 0.5], ["a", "b"]):
+        with pytest.raises(SystemExit):
+            profile.parse_profile({"banks": [{"faders": {
+                1: {"driver": "fake", "target": "x", "range": ruim}}}]})

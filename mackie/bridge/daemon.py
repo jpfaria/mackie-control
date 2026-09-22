@@ -42,14 +42,21 @@ class Bridge:
         return self._drivers[name]
 
     def _read(self, dest):
+        """The value as the fader sees it: the destination's range mapped back
+        onto the full travel."""
         try:
-            return self.driver(dest.driver).read(dest.target)
+            bruto = self.driver(dest.driver).read(dest.target)
         except Exception:
             return None
+        if bruto is None:
+            return None
+        low, high = dest.range
+        return min(1.0, max(0.0, (bruto - low) / (high - low)))
 
     def _write(self, dest, value):
+        low, high = dest.range
         try:
-            self.driver(dest.driver).write(dest.target, value)
+            self.driver(dest.driver).write(dest.target, low + value * (high - low))
             return True
         except Exception as e:
             self.log(f"  !! {dest.label}: {e}")
