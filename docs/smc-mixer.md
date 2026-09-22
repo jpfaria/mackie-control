@@ -21,7 +21,12 @@ the Mixxx docs both recommend the cable for live use.
 | Mute / Solo / Rec / Select of channel n | Note On `0x10` / `0x08` / `0x00` / `0x18` + n−1 |
 | Channel ◀ / ▶ | Note `2E` / `2F` |
 | Arrows ◀ / ▶ | Note `62` / `63` |
+| Arrows ▲ / ▼ | Note `60` / `61` |
 | Rewind / Forward / Stop / Play / Record | Note `5B` / `5C` / `5D` / `5E` / `5F` |
+
+The four buttons beside each fader, top to bottom as they sit on the
+device: **M is the one under the knob**, then S, R and the square
+(measured 2026-09-22 by pressing them in order: `10`, `08`, `00`, `18`).
 
 Every LED is lit by sending the same note back with velocity 127 (0 clears it).
 Sending a Pitch Bend makes that channel's LED **blink until the physical fader

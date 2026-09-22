@@ -12,6 +12,7 @@ Plain MIDI, no SysEx. `mackie/protocol.py` decodes messages into `Fader`,
 | Rec / Solo / Mute / Select of channel n | Note On `0x00` / `0x08` / `0x10` / `0x18` + n−1 | velocity 127 pressed, 0 released |
 | Channel ◀ / ▶ | Note `2E` / `2F` | pages the 8-channel window on a real DAW |
 | Arrows ◀ / ▶ | Note `62` / `63` | |
+| Arrows ▲ / ▼ | Note `60` / `61` | measured on the SMC-Mixer 2026-09-22 |
 | Rewind / Forward / Stop / Play / Record | Note `5B` / `5C` / `5D` / `5E` / `5F` | |
 
 ## Host → surface
