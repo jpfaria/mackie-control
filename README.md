@@ -19,6 +19,7 @@ computer has to translate.
 ```bash
 pip install git+https://github.com/jpfaria/mackie-control
 pip install 'mackie-control[hd8] @ git+https://github.com/jpfaria/mackie-control'   # with the HD 8 driver
+pip install 'mackie-control[mk300,ampero2] @ git+https://github.com/jpfaria/mackie-control'   # the pedals
 ```
 
 ### Reinstalling, after a fix
@@ -86,7 +87,7 @@ A different rig is a different file. Nothing about a rig goes into the code.
 
 | Field | Effect |
 |---|---|
-| `driver` | who writes: `hd8`, `mac`, `app` |
+| `driver` | who writes: `hd8`, `mac`, `app`, `mk300`, `ampero2` |
 | `target` | whatever that driver understands (a mixer path, an app name) |
 | `label` | the name that shows up in the log |
 | `group` | `in` or `out` — **solo only acts inside the group** |
@@ -140,4 +141,4 @@ borrowed state back — and lives in [`skills/configuring-devices`](skills/confi
 python3 -m pytest -q
 ```
 
-118 tests, no hardware: drivers and surfaces go in by injection.
+126 tests, no hardware: drivers and surfaces go in by injection.

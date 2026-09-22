@@ -14,6 +14,8 @@ surface (Mackie)  ->  Bridge  ->  driver  ->  gear
 | `hd8` | PreSonus Quantum HD 8, through the `quantum-hd8` library (UCNet). The HD 8 **does not receive MIDI**: a sweep of CC, pitch bend and notes on both of its ports changed none of its 1419 parameters (2026-09-20). |
 | `mac` | macOS output volume. Unsupported when the default output is an audio interface — AppleScript answers `missing value`, because the volume lives in the interface. |
 | `app` | One application's own volume (`Spotify`, …). |
+| `mk300` | M-VAVE MK-300 over USB, through `mvave`. Volume read back from the edit buffer, so takeover works; its 160 presets are its scenes. |
+| `ampero2` | Hotone Ampero II Stage over USB, through `ampero2`. The patch volume is **write-only** — the protocol has no query — so its fader applies at once and the value is forgotten when a patch loads; its 300 patches are its scenes. |
 
 A driver that cannot do something raises `Unsupported`; the bridge logs it and
 carries on. One channel the device refuses must never abort a solo — that bug
@@ -87,6 +89,11 @@ by that driver's own banks:
 banks:
   - driver: hd8        # becomes "HD 8 IN" and "HD 8 OUT", eight faders each
 ```
+
+`mk300` and `ampero2` ship one bank each, a volume fader, with the presets or
+patches on ◀/▶. Both are USB pedals and are often unplugged: the connection is
+opened on first use, and a pedal that is not there becomes `Unsupported` for
+that operation and is tried again on the next one.
 
 `hd8` ships two: **IN**, the eight analogue channels with their mutes, and
 **OUT**, the main output, the two headphone outs and the five ADAT buses. A
