@@ -32,6 +32,12 @@ banks:
       # --- inputs ---
       5: {driver: hd8, target: line/ch1/volume,  label: GUITAR 1, group: in, mute: line/ch1/mute}
       6: {driver: hd8, target: line/ch2/volume,  label: GUITAR 2, group: in, mute: line/ch2/mute}
+      # ch19/ch20 are ADAT channels here. `volume` is their level in the
+      # interface's own monitor mix -- NOT the level that reaches the computer,
+      # which leaves the converter before this fader. Measured 2026-09-22:
+      # `trim` on an ADAT channel is accepted and ignored, and the preamp for
+      # one lives on the external converter's front panel, out of reach. Do not
+      # copy these two lines expecting an input gain.
       7: {driver: hd8, target: line/ch19/volume, label: GUITAR 3, group: in, mute: line/ch19/mute}
       8: {driver: hd8, target: line/ch20/volume, label: GUITAR 4, group: in, mute: line/ch20/mute}
     # No buttons block: the hd8 driver already says R = load scene, and
