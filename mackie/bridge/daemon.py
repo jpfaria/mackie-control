@@ -14,6 +14,7 @@ from .drivers import Unsupported, build
 
 INTERVAL = 0.03      # s: a fader sends ~40 messages/s, so write only the last
 NEAR = 0.02          # takeover tolerance, in 0..1
+STEP = 1 / 64        # how much one encoder detent moves a value
 BLINKS = 3           # how many times the bank number blinks after a change
 BLINK = 0.12         # s of each on and each off phase
 
@@ -157,6 +158,21 @@ class Bridge:
         with self.lock:
             self.pending[channel] = value
 
+    # -- encoders --------------------------------------------------------------
+    def encoder(self, channel, delta):
+        """An endless knob nudges its destination: no position, no takeover."""
+        dest = (self.profile.globals.encoders.get(channel + 1)
+                or self.bank.encoders.get(channel + 1))
+        if dest is None:
+            return
+        current = self._read(dest)
+        if current is None:
+            self.log(f"  !! {dest.label}: cannot be read, so it cannot be nudged")
+            return
+        new = max(0.0, min(1.0, current + delta * STEP))
+        if self._write(dest, new):
+            self.log(f"  .. {dest.label} {new:.2f}")
+
     def drain_forever(self):
         """Apply the last position of each fader. Runs in its own thread."""
         while True:
@@ -247,6 +263,8 @@ class Bridge:
         event = mackie.decode(msg)
         if isinstance(event, mackie.Fader):
             self.fader(event.channel, event.value)
+        elif isinstance(event, mackie.Encoder):
+            self.encoder(event.channel, event.delta)
         elif isinstance(event, mackie.Button) and event.pressed:
             self.button(event)
 

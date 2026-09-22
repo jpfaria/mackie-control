@@ -18,11 +18,15 @@ A fader with `mute:` is muted with that parameter; one without is muted by
 zeroing its own value, which is remembered and handed back. `group` keeps solo
 honest: soloing an input must not mute the outputs.
 
-A top-level `global:` block holds faders and transport that work in every bank:
+Encoders are endless knobs: they nudge their destination up or down instead of
+jumping to a position, so they need no takeover.
+
+A top-level `global:` block holds faders, encoders and transport that work in
+every bank:
 
     global:
-      faders:
-        8: {driver: app, target: Spotify, label: Spotify}
+      encoders:
+        1: {driver: app, target: Spotify, label: Spotify}
       transport:
         play: {driver: app, target: Spotify, command: playpause}
 
@@ -55,6 +59,7 @@ class Command:
 class Bank:
     name: str
     faders: dict[int, Destination] = field(default_factory=dict)
+    encoders: dict[int, Destination] = field(default_factory=dict)
     buttons: dict[str, str] = field(default_factory=dict)
     transport: dict[str, Command] = field(default_factory=dict)
 
@@ -102,11 +107,15 @@ def parse_profile(data: dict) -> Profile:
         globals=Bank(name="global",
                      faders={int(k): _destination(v)
                              for k, v in (g.get("faders") or {}).items()},
+                     encoders={int(k): _destination(v)
+                               for k, v in (g.get("encoders") or {}).items()},
                      buttons=dict(g.get("buttons") or {}),
                      transport={k: _command(v)
                                 for k, v in (g.get("transport") or {}).items()}),
         banks=[Bank(name=b.get("name", f"bank {i + 1}"),
                     faders={int(k): _destination(v) for k, v in (b.get("faders") or {}).items()},
+                    encoders={int(k): _destination(v)
+                              for k, v in (b.get("encoders") or {}).items()},
                     buttons=dict(b.get("buttons") or {}),
                     transport={k: _command(v)
                                for k, v in (b.get("transport") or {}).items()})

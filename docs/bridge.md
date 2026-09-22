@@ -52,11 +52,15 @@ bank's own.
 
 ```yaml
 global:
-  faders:
-    8: {driver: app, target: Spotify, label: Spotify}
+  encoders:
+    1: {driver: app, target: Spotify, label: Spotify}   # endless knob: no takeover
   transport:
     play: {driver: app, target: Spotify, command: playpause}
 ```
+
+An **encoder** is an endless knob: it nudges its destination by a step per
+detent instead of jumping to a position, so it needs no takeover and never
+fights with where the control physically sits.
 
 Controlling the music has nothing to do with which set of faders you are on —
 without this, play does nothing while you are looking at the mixer bank.

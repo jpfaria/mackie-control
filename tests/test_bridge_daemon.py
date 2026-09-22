@@ -390,3 +390,44 @@ def test_a_global_fader_wins_over_the_banks():
     b = daemon.Bridge(profile.parse_profile(perfil), drivers={"fake": fake},
                       log=lambda *a: None)
     assert b.destination(8).label == "GLOBAL"
+
+
+ENCODERS = {"banks": PROFILE["banks"],
+            "global": {"encoders": {1: {"driver": "fake", "target": "g2",
+                                        "label": "SPOTIFY"}}}}
+
+
+def test_an_encoder_nudges_its_destination_up_and_down():
+    fake = FakeDriver()
+    b = daemon.Bridge(profile.parse_profile(ENCODERS), drivers={"fake": fake},
+                      log=lambda *a: None)
+    antes = fake.values["g2"]
+    b.on_midi(mido.Message("control_change", control=mackie.VPOT, value=1))
+    assert fake.values["g2"] == pytest.approx(antes + daemon.STEP)
+    b.on_midi(mido.Message("control_change", control=mackie.VPOT, value=0x41))
+    assert fake.values["g2"] == pytest.approx(antes)
+
+
+def test_an_encoder_never_leaves_the_range():
+    fake = FakeDriver()
+    fake.values["g2"] = 0.99
+    b = daemon.Bridge(profile.parse_profile(ENCODERS), drivers={"fake": fake},
+                      log=lambda *a: None)
+    for _ in range(10):
+        b.on_midi(mido.Message("control_change", control=mackie.VPOT, value=1))
+    assert fake.values["g2"] == 1.0
+
+
+def test_a_global_encoder_works_in_every_bank():
+    fake = FakeDriver()
+    b = daemon.Bridge(profile.parse_profile(ENCODERS), drivers={"fake": fake},
+                      log=lambda *a: None)
+    b.step_bank(+1)
+    antes = fake.values["g2"]
+    b.on_midi(mido.Message("control_change", control=mackie.VPOT, value=1))
+    assert fake.values["g2"] > antes
+
+
+def test_an_unmapped_encoder_is_ignored(bridge):
+    b, fake = bridge
+    b.on_midi(mido.Message("control_change", control=mackie.VPOT + 3, value=1))   # no raise
