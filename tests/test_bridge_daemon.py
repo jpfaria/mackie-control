@@ -589,3 +589,19 @@ def test_changing_scene_shows_it_on_the_r_row_and_the_mute_column(rig):
     b.flash_number(9, mackie.MUTE, sleep=lambda s: None)   # row 1, column 1
     assert _acesos(sent, mackie.REC) == [1] * daemon.BLINKS
     assert _acesos(sent, mackie.MUTE) == [1] * daemon.BLINKS
+
+
+def test_the_r_button_and_the_arrows_page_the_same_list():
+    """R n loaded the n-th scene of the device while the arrows paged the
+    profile's list, so the two disagreed on any bank with `scenes:`."""
+    chosen = {"banks": [{"name": "HD 8", "driver": "fake", "scenes": ["TWO", "ONE"],
+                         "faders": {1: {"driver": "fake", "target": "main"},
+                                    2: {"driver": "fake", "target": "phones"}}}]}
+    fake = FakeDriver()
+    b = daemon.Bridge(profile.parse_profile(chosen), send=lambda **k: None,
+                      drivers={"fake": fake}, log=lambda *a: None)
+    b.scene(1)
+    assert fake.loaded == "TWO"           # the first of the profile's list
+    b.scene(2)
+    assert fake.loaded == "ONE"
+    assert b.scene_index == 1             # the arrows now carry on from here

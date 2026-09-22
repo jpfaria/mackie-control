@@ -308,18 +308,12 @@ class Bridge:
             self.log(f"  !! mute {dest.label}: {e}")
 
     def scene(self, fader):
-        dest = self.destination(fader)
-        if dest is None:
-            return
-        try:
-            name = self.driver(dest.driver).load_scene(fader - 1)
+        """R n loads the n-th scene **of the same list the arrows page** -- the
+        profile's when it has one. They used to disagree: R went by the device's
+        own order and the arrows by the profile's."""
+        if self.load_scene_at(fader - 1):
             self.scene_loaded = fader
-            self.soloed, self.muted_before = None, {}
-            self.took_over.clear()
-            self.log(f"  -> scene {name}")
-        except Unsupported as e:
-            self.log(f"  !! scene: {e}")
-        self.push_state()
+            self.flash_number(fader - 1, mackie.MUTE)
 
     # -- input -----------------------------------------------------------------
     def on_midi(self, msg):
