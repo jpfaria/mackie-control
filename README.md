@@ -95,8 +95,9 @@ A different rig is a different file. Nothing about a rig goes into the code.
 | `takeover` | `false` waives the takeover for that destination |
 
 ◀ / ▶ pages the current device's scenes and loads each on the press. Neither
-arrow pair wraps. The R row shows which row of eight you are on, the square row
-the device's column, the mute row the scene's — only whatever just changed.
+arrow pair wraps. The row of lamps under the knobs shows which row of
+eight you are on; the square row is the device's column and the R row the
+scene's — only whatever just changed.
 
 Faders jump to a position, so they wait for **takeover**: a fader starts writing
 only once it crosses the value already in the gear. Encoders are endless knobs —

@@ -101,10 +101,10 @@ Without `scenes:` the device's own list is used, in the order it reports. With
 it, the profile chooses — the gear may hold thirty presets of which four matter
 tonight, and that choice belongs to the user, never to the code.
 
-**Where am I**: the surface has 32 lamps, four rows of eight, and the knob has
-none of its own (measured 2026-09-22). So a number up to 64 is a row and a
-column: the **R row** is the row of eight, the **square row** is the column of
-a device, the **mute row** the column of a scene. Only what just changed is
+**Where am I**: a number up to 64 is a row and a column. The **row of lamps
+under the knobs** (notes `10`-`17`) is the row of eight — the one the bridge
+has always used for the page, and the one João reads. The column says which
+number it is: the **square row** for a device, the **R row** for a scene. Only what just changed is
 shown — the R row cannot carry two numbers at once — and the real mute and solo
 LEDs come straight back after the flash.
 

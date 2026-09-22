@@ -314,7 +314,7 @@ def test_bank_change_blinks_row_and_column_three_times():
     b.send = lambda **k: sent.append(k)
     b.bank_index = 11                       # linha 1, coluna 3
     b.flash_bank(sleep=lambda s: None)
-    assert _acesos(sent, mackie.REC) == [1] * daemon.BLINKS
+    assert _acesos(sent, mackie.MUTE) == [1] * daemon.BLINKS
     assert _acesos(sent, mackie.SELECT) == [3] * daemon.BLINKS
 
 
@@ -326,7 +326,7 @@ def test_the_blink_touches_only_its_own_cell():
     b.bank_index = 11
     b.flash_bank(sleep=lambda s: None)
     fase_do_blink = sent[:daemon.BLINKS * 2 * 2]      # on+off, duas notas cada
-    assert {k["note"] for k in fase_do_blink} == {mackie.REC + 1, mackie.SELECT + 3}
+    assert {k["note"] for k in fase_do_blink} == {mackie.MUTE + 1, mackie.SELECT + 3}
 
 
 def test_beyond_64_banks_there_is_nothing_to_flash():
@@ -571,24 +571,24 @@ def test_the_profile_chooses_which_scenes_and_in_which_order():
     assert fake.loaded == "TWO"
 
 
-def test_changing_device_shows_it_on_the_r_row_and_the_square_column():
+def test_changing_device_shows_it_under_the_knobs_and_on_the_square():
     muitos = {"banks": [{"name": f"b{i}", "faders": {}} for i in range(20)]}
     b = daemon.Bridge(profile.parse_profile(muitos), log=lambda *a: None)
     sent = []
     b.send = lambda **k: sent.append(k)
     b.bank_index = 11                       # row 1, column 3
     b.flash_number(b.bank_index, mackie.SELECT, sleep=lambda s: None)
-    assert _acesos(sent, mackie.REC) == [1] * daemon.BLINKS
+    assert _acesos(sent, mackie.MUTE) == [1] * daemon.BLINKS
     assert _acesos(sent, mackie.SELECT) == [3] * daemon.BLINKS
 
 
-def test_changing_scene_shows_it_on_the_r_row_and_the_mute_column(rig):
+def test_changing_scene_shows_it_under_the_knobs_and_on_the_r_row(rig):
     b, _ = rig
     sent = []
     b.send = lambda **k: sent.append(k)
-    b.flash_number(9, mackie.MUTE, sleep=lambda s: None)   # row 1, column 1
-    assert _acesos(sent, mackie.REC) == [1] * daemon.BLINKS
+    b.flash_number(9, mackie.REC, sleep=lambda s: None)    # row 1, column 1
     assert _acesos(sent, mackie.MUTE) == [1] * daemon.BLINKS
+    assert _acesos(sent, mackie.REC) == [1] * daemon.BLINKS
 
 
 def test_the_r_button_and_the_arrows_page_the_same_list():

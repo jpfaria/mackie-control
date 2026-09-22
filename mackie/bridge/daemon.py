@@ -103,7 +103,7 @@ class Bridge:
         start = 0 if self.scene_index is None else self.scene_index + step
         i = min(len(names) - 1, max(0, start))
         if self.load_scene_at(i):
-            self.flash_number(i, mackie.MUTE)
+            self.flash_number(i, mackie.REC)
 
     def load_scene_at(self, i):
         names = self.scene_names()
@@ -147,18 +147,18 @@ class Bridge:
         """Show a number as a grid, then get out of the way.
 
         The surface has no display and 32 lamps in four rows of eight (measured
-        2026-09-22; the knob has none of its own). So a number up to 64 is a
-        row and a column: the **R row** is the row of eight, and the column row
-        says which number it is -- the square for the device, the mute row for
-        the scene. Only the one that just changed is shown, because the R row
-        cannot carry two numbers at once. It is a flash, not a state:
-        `push_state` puts the real LEDs back right after."""
+        2026-09-22). So a number up to 64 is a row and a column: the **row of
+        lamps under the knobs** is the row of eight -- the one João reads as
+        the page -- and the column row says which number it is: the square for
+        the device, the R row for the scene. Only the one that just changed is
+        shown, because the row cannot carry two numbers at once. It is a flash,
+        not a state: `push_state` puts the real LEDs back right after."""
         row, column = divmod(n, 8)
         if row > 7:                       # beyond 64 banks there is nothing to show
             return
         for _ in range(BLINKS):
             for aceso in (True, False):
-                self.send(**mackie.led(mackie.REC + row, aceso))
+                self.send(**mackie.led(mackie.MUTE + row, aceso))
                 self.send(**mackie.led(column_row + column, aceso))
                 sleep(BLINK)
         self.push_state()                 # real LEDs come back
@@ -313,7 +313,7 @@ class Bridge:
         own order and the arrows by the profile's."""
         if self.load_scene_at(fader - 1):
             self.scene_loaded = fader
-            self.flash_number(fader - 1, mackie.MUTE)
+            self.flash_number(fader - 1, mackie.REC)
 
     # -- input -----------------------------------------------------------------
     def on_midi(self, msg):
