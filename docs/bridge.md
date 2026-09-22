@@ -15,7 +15,8 @@ surface (Mackie)  ->  Bridge  ->  driver  ->  gear
 | `mac` | macOS output volume. Unsupported when the default output is an audio interface — AppleScript answers `missing value`, because the volume lives in the interface. |
 | `app` | One application's own volume (`Spotify`, …). |
 | `mk300` | M-VAVE MK-300 over USB, through `mvave`. Volume read back from the edit buffer, so takeover works; its 160 presets are its scenes. |
-| `ampero2` | Hotone Ampero II Stage over USB, through `ampero2`. The patch volume is **write-only** — the protocol has no query — so its fader applies at once and the value is forgotten when a patch loads; its 300 patches are its scenes. |
+| `ampero2` | Hotone Ampero II Stage over USB, through `ampero2`. The patch volume is **write-only** — the protocol has no query — so its fader applies at once and the value is forgotten when a patch loads; its 300 patches are its scenes. Measured 2026-09-22: 300 names in 0.9 s (read once), and the fader moves the volume on the pedal. |
+| | MK-300, measured the same day: volume reads 0.60, writes in 6 ms and reads back; 160 names in 1 s (read once). |
 
 A driver that cannot do something raises `Unsupported`; the bridge logs it and
 carries on. One channel the device refuses must never abort a solo — that bug

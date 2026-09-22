@@ -14,5 +14,3 @@ heard it.
   SMC-Mixer. The drivers only look for the USB name today (`USB Composite
   Device`, `Ampero II Stage MIDI`). Measure each pedal's BLE port name, and
   whether its SysEx survives BLE at all, before adding it.
-- **Ampero II on the hardware**: the driver was written and tested without the
-  pedal connected. Measure volume write, patch list and patch load on it.
