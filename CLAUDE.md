@@ -47,8 +47,14 @@ Outputs in one bank, guitars in another, the computer in a third. Eight faders
 of mixed subjects on one screen is what makes a profile unreadable, and paging
 is a keypress.
 
-**L and R are two faders when the gear has two parameters.** Do not decide for
+**L and R are two faders when the gear has two parameters** — do not decide for
 the user that a pair should be linked (2026-09-22: "eu quero poder controlar L
-e R separadamente"). On the HD 8, measured the same day: MAIN and both
-headphone outs have a single volume parameter each, so they cannot be split;
-every aux send is its own channel (`aux/ch1`…`aux/ch14`), so those can.
+e R separadamente"). On the HD 8 there is no such pair to split: MAIN and both
+headphone outs have one volume parameter each, and an aux send is a whole
+stereo bus (`aux/ch(4+k)` is the ADAT k/k+1 pair, so `aux/ch10` is all of ADAT
+11/12). Splitting L and R there has to happen further down the chain.
+
+That last fact came from reading `quantum-hd8/docs/` **after** telling João his
+FRFR fader was moving one side of a pair, which was wrong: `aux/ch9` is the ADAT
+9/10 bus, a different destination. The rig's own repos answer these questions —
+read them before making a claim about his rig, not after.
