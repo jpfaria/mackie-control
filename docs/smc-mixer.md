@@ -35,10 +35,12 @@ reaches it, only a **Pitch Bend** on that channel, and it then *blinks* until
 the physical fader matches. CC `30`-`37` (the Mackie V-Pot ring) and notes
 `20`-`27` do nothing; notes `50`-`5F` light the transport.
 
-**The arrows and Channel have no lamps at all**: notes `60`-`63` and `2E`/`2F`
-light nothing (measured 2026-09-22, with the bridge stopped so nothing could
-clear them). There is no way to show on the surface which way there is still
-somewhere to go.
+**The arrows and Channel have lamps the host cannot reach.** They light when
+they are pressed — the device does that itself — but nothing sent to them lights
+them: notes `60`-`63` and `2E`/`2F` do nothing, measured 2026-09-22 with the
+bridge stopped so nothing could clear them. So a bridge cannot show on those
+buttons which way there is still somewhere to go; only the player pressing one
+lights it.
 
 So the lamp a player reads first cannot be held steady: showing a row on it
 means blinking that channel, and the only value that stops the blink is the
