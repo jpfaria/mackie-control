@@ -44,6 +44,23 @@ banks:
 - `select: bank` is optional: it makes the square button n jump straight to bank
   n. Left out (the default), the square buttons do nothing.
 
+## Global faders and transport
+
+A top-level `global:` block is a bank that is always in reach: its faders and
+its transport work whichever bank is selected, and a global fader wins over the
+bank's own.
+
+```yaml
+global:
+  faders:
+    8: {driver: app, target: Spotify, label: Spotify}
+  transport:
+    play: {driver: app, target: Spotify, command: playpause}
+```
+
+Controlling the music has nothing to do with which set of faders you are on —
+without this, play does nothing while you are looking at the mixer bank.
+
 ## Takeover
 
 The surface has no motors and cannot report where its faders are, so the bridge

@@ -60,7 +60,9 @@ class Bridge:
         return self.profile.bank(self.bank_index)
 
     def destination(self, fader):
-        return self.bank.faders.get(fader)
+        """A global fader wins over the bank's: it is the one that is always
+        there, whichever bank is selected."""
+        return self.profile.globals.faders.get(fader) or self.bank.faders.get(fader)
 
     def step_bank(self, step):
         self.select_bank((self.bank_index + step) % len(self.profile.banks))
@@ -191,7 +193,8 @@ class Bridge:
         target = self.destination(fader)
         if target is None:
             return
-        peers = [(n, d) for n, d in self.bank.faders.items() if d.group == target.group]
+        todos = {**self.bank.faders, **self.profile.globals.faders}
+        peers = [(n, d) for n, d in todos.items() if d.group == target.group]
         if self.soloed == fader:
             for n, dest in peers:
                 if dest.mute is not None:
@@ -248,7 +251,7 @@ class Bridge:
             self.button(event)
 
     def bank_driver(self):
-        """The driver a bank's global buttons belong to: the one most of its
+        """The driver a bank's own buttons belong to: the one most of its
         faders use. With a single driver per bank (the usual case) this is just
         that driver."""
         nomes = [d.driver for d in self.bank.faders.values()]
@@ -287,6 +290,8 @@ class Bridge:
             self.scene(b.channel + 1)
         elif b.kind == "select" and actions.get("select") == "bank":
             self.select_bank(b.channel)
+        elif b.kind in self.profile.globals.transport:
+            self.run_command(self.profile.globals.transport[b.kind], b.kind)
         elif b.kind in self.bank.transport:
             self.run_command(self.bank.transport[b.kind], b.kind)
         else:

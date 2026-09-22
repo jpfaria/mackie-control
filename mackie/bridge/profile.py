@@ -18,6 +18,14 @@ A fader with `mute:` is muted with that parameter; one without is muted by
 zeroing its own value, which is remembered and handed back. `group` keeps solo
 honest: soloing an input must not mute the outputs.
 
+A top-level `global:` block holds faders and transport that work in every bank:
+
+    global:
+      faders:
+        8: {driver: app, target: Spotify, label: Spotify}
+      transport:
+        play: {driver: app, target: Spotify, command: playpause}
+
 See examples/ for complete profiles."""
 from __future__ import annotations
 
@@ -55,6 +63,10 @@ class Bank:
 class Profile:
     surface: str
     banks: list[Bank]
+    # A bank of its own that is always in reach: its faders and transport work
+    # whichever bank is selected. Controlling the music has nothing to do with
+    # which set of faders you happen to be on.
+    globals: Bank = field(default_factory=lambda: Bank(name="global"))
     # Sending a fader's real value back makes the surface blink that channel's
     # LED until the physical fader matches. Useful as a "you are out of sync"
     # sign, annoying if you never intend to chase it. Off by default.
@@ -83,9 +95,16 @@ def parse_profile(data: dict) -> Profile:
     banks = data.get("banks") or []
     if not banks:
         raise SystemExit("profile has no banks")
+    g = data.get("global") or {}
     return Profile(
         surface=data.get("surface", "smc-mixer"),
         positions=bool(data.get("positions", False)),
+        globals=Bank(name="global",
+                     faders={int(k): _destination(v)
+                             for k, v in (g.get("faders") or {}).items()},
+                     buttons=dict(g.get("buttons") or {}),
+                     transport={k: _command(v)
+                                for k, v in (g.get("transport") or {}).items()}),
         banks=[Bank(name=b.get("name", f"bank {i + 1}"),
                     faders={int(k): _destination(v) for k, v in (b.get("faders") or {}).items()},
                     buttons=dict(b.get("buttons") or {}),

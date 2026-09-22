@@ -350,3 +350,43 @@ def test_the_flash_puts_the_real_leds_back_on_its_own(bridge):
             ultimos[k["note"]] = k["velocity"]
     assert ultimos[mackie.MUTE] == mackie.OFF
     assert ultimos[mackie.SELECT] == mackie.OFF
+
+
+GLOBAL = {"banks": PROFILE["banks"],
+          "global": {"faders": {8: {"driver": "fake", "target": "g2", "label": "SEMPRE"}},
+                     "transport": {"play": {"driver": "fake", "target": "Spotify",
+                                            "command": "playpause"}}}}
+
+
+def test_a_global_fader_works_in_every_bank():
+    fake = Commandable()
+    b = daemon.Bridge(profile.parse_profile(GLOBAL), drivers={"fake": fake},
+                      log=lambda *a: None)
+    for _ in range(2):
+        b.fader(7, 0.8)                     # g2 esta em 0.8: assume de imediato
+        b.fader(7, 0.3)
+        b.drain()
+        assert fake.values["g2"] == 0.3
+        fake.values["g2"] = 0.8
+        b.step_bank(+1)
+
+
+def test_global_transport_works_in_every_bank():
+    fake = Commandable()
+    b = daemon.Bridge(profile.parse_profile(GLOBAL), drivers={"fake": fake},
+                      log=lambda *a: None)
+    b.on_midi(mido.Message("note_on", note=mackie.PLAY, velocity=127))
+    b.step_bank(+1)
+    b.on_midi(mido.Message("note_on", note=mackie.PLAY, velocity=127))
+    assert fake.ran == [("Spotify", "playpause")] * 2
+
+
+def test_a_global_fader_wins_over_the_banks():
+    fake = Commandable()
+    perfil = {"banks": [{"name": "x", "faders": {
+                  8: {"driver": "fake", "target": "main", "label": "DO BANCO"}}}],
+              "global": {"faders": {
+                  8: {"driver": "fake", "target": "g2", "label": "GLOBAL"}}}}
+    b = daemon.Bridge(profile.parse_profile(perfil), drivers={"fake": fake},
+                      log=lambda *a: None)
+    assert b.destination(8).label == "GLOBAL"
