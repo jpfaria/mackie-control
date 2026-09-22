@@ -21,13 +21,28 @@ pip install git+https://github.com/jpfaria/mackie-control
 pip install 'mackie-control[hd8] @ git+https://github.com/jpfaria/mackie-control'   # with the HD 8 driver
 ```
 
-**Upgrading needs `--force-reinstall`** unless the version in `pyproject.toml`
-changed: `pip install -U` compares version strings, not commits, so it clones
-the new commit, sees the same version and installs nothing — silently leaving
-the old code in place (2026-09-22: a fixed bug came back twice this way).
+### Reinstalling, after a fix
+
+`pip install -U git+...` compares **version strings, not commits**: it clones
+the new commit, sees the same version already installed and installs nothing —
+silently leaving the old code in place. On 2026-09-22 two fixes were pushed,
+installed this way, and neither reached the machine that had the bug.
+
+So either bump `version` in `pyproject.toml` with the fix, or reinstall by
+force. The whole chain, from a fix to a working rig:
 
 ```bash
 pip install --force-reinstall --no-deps git+https://github.com/jpfaria/mackie-control
+pip install --force-reinstall --no-deps git+https://github.com/jpfaria/quantum-hd8   # the HD 8 driver's library
+pkill -f "mackie bridge"                                                             # the old code is still running
+mackie bridge ~/Projetos/github.com/jpfaria/music-setup/settings/smc-mixer.yaml
+```
+
+Check which code is actually loaded, not which commit pip cloned:
+
+```bash
+python3 -c "import mackie, mackie.bridge.run as r; print(mackie.__file__)"
+pip show mackie-control | grep -i version
 ```
 
 ## Use

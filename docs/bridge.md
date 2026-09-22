@@ -75,6 +75,23 @@ fights with where the control physically sits.
 Controlling the music has nothing to do with which set of faders you are on —
 without this, play does nothing while you are looking at the mixer bank.
 
+## Losing the surface and getting it back
+
+Switching the surface off takes its port out of CoreMIDI **without any error
+reaching the reader**: nothing is raised, nothing is logged, and the bridge
+stays alive and silent forever (measured 2026-09-22). The loop therefore checks
+the port list once a second instead of waiting for an exception, closes the dead
+ports, and reopens the surface when it comes back — re-arming takeover and
+pushing the LEDs, because the faders may have been moved while it was away.
+
+```
+** the surface is back (SINCO SMC-Mixer-Master)
+```
+
+The same device is named differently depending on how it is connected —
+`SINCO SMC-Mixer-Master` over USB, `SMC-Mixer Bluetooth` over BLE — so a surface
+carries several `port_hints`, tried in order.
+
 ## Takeover
 
 The surface has no motors and cannot report where its faders are, so the bridge

@@ -1,13 +1,24 @@
-"""Runs the bridge against real MIDI ports (mido), until Ctrl-C."""
+"""Runs the bridge against real MIDI ports (mido), until Ctrl-C.
+
+The surface can go away under the loop: switching the SMC-Mixer off takes its
+port out of CoreMIDI **without any error reaching the reader** -- the bridge
+stays alive and silent forever (measured 2026-09-22). So the loop watches the
+port list instead of waiting for an exception, and reopens the surface when it
+comes back."""
 from __future__ import annotations
 
 import threading
+import time
 
 import mido
 
 from ..surfaces import get as get_surface
 from .daemon import Bridge
 from .profile import load_profile
+
+POLL = 0.005        # s between reads of the surface
+WATCH = 1.0         # s between checks that the surface is still there
+RETRY = 1.0         # s between tries while it is gone
 
 
 def find_port(hints, names: list[str]) -> str:
@@ -22,20 +33,72 @@ def find_port(hints, names: list[str]) -> str:
     raise SystemExit(f"no MIDI port matching {list(hints)}: {names}")
 
 
-def run(profile_path: str, port: str | None = None, log=print) -> None:
+def _present(hints, names) -> str | None:
+    try:
+        return find_port(hints, names)
+    except SystemExit:
+        return None
+
+
+def run(profile_path: str, port: str | None = None, log=print,
+        midi=mido, sleep=time.sleep, watch: float = WATCH) -> None:
     profile = load_profile(profile_path)
     surface = get_surface(profile.surface)
-    src = port or find_port(surface.port_hints, mido.get_input_names())
-    dst = port or find_port(surface.port_hints, mido.get_output_names())
+    hints = (port,) if port else surface.port_hints
 
-    with mido.open_output(dst) as out, mido.open_input(src) as inp:
-        bridge = Bridge(profile, send=lambda **k: out.send(mido.Message(**k)), log=log)
-        threading.Thread(target=bridge.drain_forever, daemon=True).start()
-        log(f"bridge: {surface.name} ({src}) -> "
-            + ", ".join(b.name for b in profile.banks))
-        bridge.select_bank(0)
-        try:
-            for msg in inp:
-                bridge.on_midi(msg)
-        except KeyboardInterrupt:
-            log("stopped")
+    # The output port is replaced on every reconnect, so the bridge sends
+    # through whatever is open now instead of holding on to a dead port.
+    live = {"out": None}
+    bridge = Bridge(profile,
+                    send=lambda **k: live["out"] and live["out"].send(midi.Message(**k)),
+                    log=log)
+    threading.Thread(target=bridge.drain_forever, daemon=True).start()
+
+    first = True
+    try:
+        while True:
+            src = _wait_for_surface(hints, midi, log, sleep, first)
+            if src is None:
+                continue
+            dst = _present(hints, midi.get_output_names()) or src
+            inp, out = midi.open_input(src), midi.open_output(dst)
+            live["out"] = out
+            if first:
+                log(f"bridge: {surface.name} ({src}) -> "
+                    + ", ".join(b.name for b in profile.banks))
+            else:
+                log(f"** the surface is back ({src})")
+            bridge.select_bank(bridge.bank_index)
+            first = False
+            _read_until_gone(bridge, inp, hints, midi, sleep, watch)
+            live["out"] = None
+            for p in (inp, out):
+                p.close()
+            log(f"!! the surface is gone ({src}); waiting for it to come back")
+    except KeyboardInterrupt:
+        log("stopped")
+        raise
+
+
+def _wait_for_surface(hints, midi, log, sleep, first):
+    src = _present(hints, midi.get_input_names())
+    if src is None:
+        if first:
+            log(f"waiting for a MIDI port matching {list(hints)}")
+        sleep(RETRY)
+    return src
+
+
+def _read_until_gone(bridge, inp, hints, midi, sleep, watch):
+    """Read the surface until its port leaves CoreMIDI. Nothing is raised when
+    it does, so the port list is the only sign."""
+    since = 0.0
+    while True:
+        for msg in inp.iter_pending():
+            bridge.on_midi(msg)
+        sleep(POLL)
+        since += POLL
+        if since >= watch:
+            since = 0.0
+            if _present(hints, midi.get_input_names()) is None:
+                return
