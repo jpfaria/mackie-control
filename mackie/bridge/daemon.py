@@ -14,7 +14,8 @@ from .drivers import Unsupported, build
 
 INTERVAL = 0.03      # s: a fader sends ~40 messages/s, so write only the last
 NEAR = 0.02          # takeover tolerance, in 0..1
-FLASH = 0.9          # s the bank number stays lit after a bank change
+BLINKS = 3           # how many times the bank number blinks after a change
+BLINK = 0.12         # s of each on and each off phase
 
 
 class Bridge:
@@ -91,10 +92,11 @@ class Bridge:
         row, column = divmod(self.bank_index, 8)
         if row > 7:                       # beyond 64 banks there is nothing to show
             return
-        for i in range(8):
-            self.send(**mackie.led(mackie.MUTE + i, i == row))
-            self.send(**mackie.led(mackie.SELECT + i, i == column))
-        sleep(FLASH)
+        for _ in range(BLINKS):
+            for aceso in (True, False):
+                self.send(**mackie.led(mackie.MUTE + row, aceso))
+                self.send(**mackie.led(mackie.SELECT + column, aceso))
+                sleep(BLINK)
         self.push_state()                 # real LEDs come back
 
     def push_state(self):
