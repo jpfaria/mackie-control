@@ -107,7 +107,7 @@ class Bridge:
             # Only a fader with a destination AND a readable value gets a
             # position: sending one to an unmapped fader makes the surface
             # blink it forever, because nothing will ever align.
-            if value is not None:
+            if value is not None and self.profile.positions:
                 self.send(**mackie.fader_position(fader - 1, value))
             self.send(**mackie.led(mackie.MUTE + fader - 1, self._is_muted(fader)))
             self.send(**mackie.led(mackie.SOLO + fader - 1, self.soloed == fader))
@@ -166,7 +166,7 @@ class Bridge:
             batch, self.pending = self.pending, {}
         for channel, value in batch.items():
             dest = self.destination(channel + 1)
-            if dest is not None and self._write(dest, value):
+            if dest is not None and self._write(dest, value) and self.profile.positions:
                 self.send(**mackie.fader_position(channel, value))   # aligns the LED
 
     # -- buttons ---------------------------------------------------------------

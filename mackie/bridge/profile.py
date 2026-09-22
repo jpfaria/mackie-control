@@ -55,6 +55,10 @@ class Bank:
 class Profile:
     surface: str
     banks: list[Bank]
+    # Sending a fader's real value back makes the surface blink that channel's
+    # LED until the physical fader matches. Useful as a "you are out of sync"
+    # sign, annoying if you never intend to chase it. Off by default.
+    positions: bool = False
 
     def bank(self, i: int) -> Bank:
         return self.banks[i % len(self.banks)]
@@ -81,6 +85,7 @@ def parse_profile(data: dict) -> Profile:
         raise SystemExit("profile has no banks")
     return Profile(
         surface=data.get("surface", "smc-mixer"),
+        positions=bool(data.get("positions", False)),
         banks=[Bank(name=b.get("name", f"bank {i + 1}"),
                     faders={int(k): _destination(v) for k, v in (b.get("faders") or {}).items()},
                     buttons=dict(b.get("buttons") or {}),

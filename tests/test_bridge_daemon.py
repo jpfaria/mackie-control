@@ -36,7 +36,7 @@ class FakeDriver(Driver):
         return self.loaded
 
 
-PROFILE = {"banks": [
+PROFILE = {"positions": True, "banks": [
     {"name": "rig", "faders": {
         1: {"driver": "fake", "target": "main", "label": "MAIN", "group": "out",
             "mute": "main/mute"},

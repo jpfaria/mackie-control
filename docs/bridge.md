@@ -54,10 +54,14 @@ knob happened to be sitting. Changing banks arms takeover again.
 ## Feedback
 
 On every bank change, scene load, mute and solo the bridge pushes state back:
-each fader's real value (Pitch Bend) and the LEDs for mute, solo, the loaded
-scene (R) and the active bank (the square). A fader LED blinks while the
-physical position disagrees with the value — that blink is information, not a
-fault.
+the LEDs for mute, solo and the loaded scene (R), plus three blinks of the bank
+number — the mute row is the row, the square button is the column, so 8×8
+addresses 64 banks.
+
+**Fader positions are not sent by default.** Sending one makes the surface blink
+that channel's LED until the physical fader matches, which is a useful
+out-of-sync sign and an irritation if you do not plan to chase it. Turn it on
+with a top-level `positions: true` in the profile.
 
 ## Examples
 
