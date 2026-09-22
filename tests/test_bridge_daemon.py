@@ -404,8 +404,10 @@ def test_an_encoder_nudges_its_destination_up_and_down():
                       log=lambda *a: None)
     antes = fake.values["g2"]
     b.on_midi(mido.Message("control_change", control=mackie.VPOT, value=1))
+    b.drain()
     assert fake.values["g2"] == pytest.approx(antes + daemon.STEP)
     b.on_midi(mido.Message("control_change", control=mackie.VPOT, value=0x41))
+    b.drain()
     assert fake.values["g2"] == pytest.approx(antes)
 
 
@@ -416,6 +418,7 @@ def test_an_encoder_never_leaves_the_range():
                       log=lambda *a: None)
     for _ in range(10):
         b.on_midi(mido.Message("control_change", control=mackie.VPOT, value=1))
+        b.drain()
     assert fake.values["g2"] == 1.0
 
 
@@ -426,6 +429,7 @@ def test_a_global_encoder_works_in_every_bank():
     b.step_bank(+1)
     antes = fake.values["g2"]
     b.on_midi(mido.Message("control_change", control=mackie.VPOT, value=1))
+    b.drain()
     assert fake.values["g2"] > antes
 
 
@@ -635,3 +639,61 @@ def test_a_row_is_shown_even_before_that_fader_has_been_touched():
     b.flash_bank(sleep=lambda s: None)
     bends = [k for k in sent if k["type"] == "pitchwheel"]
     assert bends and bends[0]["channel"] == 1
+
+
+# -- encoders do not block the MIDI thread (2026-09-22) ----------------------
+
+UM_ENCODER = {"banks": [{"name": "rig", "faders": {},
+                         "encoders": {1: {"driver": "fake", "target": "main",
+                                          "label": "SPOTIFY"}}}]}
+
+
+def _com_encoder():
+    fake = FakeDriver()
+    return daemon.Bridge(profile.parse_profile(UM_ENCODER), send=lambda **k: None,
+                         drivers={"fake": fake}, log=lambda *a: None), fake
+
+
+def test_an_encoder_detent_writes_nothing_until_the_drain():
+    """A write can take a tenth of a second (AppleScript to Spotify: 117 ms
+    measured). Doing it on the MIDI thread backs up every other message."""
+    b, fake = _com_encoder()
+    b.encoder(0, +1)
+    assert fake.values["main"] == 0.5          # untouched so far
+    b.drain()
+    assert fake.values["main"] > 0.5
+
+
+def test_detents_are_added_up_and_applied_once():
+    b, fake = _com_encoder()
+    for _ in range(4):
+        b.encoder(0, +1)
+    b.drain()
+    assert fake.values["main"] == pytest.approx(0.5 + 4 * daemon.STEP)
+
+
+def test_a_detent_the_other_way_cancels_one():
+    b, fake = _com_encoder()
+    b.encoder(0, +3)
+    b.encoder(0, -1)
+    b.drain()
+    assert fake.values["main"] == pytest.approx(0.5 + 2 * daemon.STEP)
+
+
+def test_push_state_reads_nothing_when_positions_are_off():
+    """Reading a fader costs a round trip -- 117 ms to Spotify through
+    AppleScript -- and the value is only used to send a position back. With
+    positions off, reading all eight on every bank change blocked the surface
+    for the best part of a second (2026-09-22)."""
+    lido = []
+
+    class Lenta(FakeDriver):
+        def read(self, target):
+            lido.append(target)
+            return super().read(target)
+
+    b = daemon.Bridge(profile.parse_profile({"banks": PROFILE["banks"]}),
+                      send=lambda **k: None, drivers={"fake": Lenta()},
+                      log=lambda *a: None)
+    b.push_state()
+    assert [t for t in lido if not t.endswith("/mute")] == []

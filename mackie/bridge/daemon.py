@@ -34,6 +34,7 @@ class Bridge:
         self.took_over = set()      # (bank, channel) already in control
         self.last_seen = {}         # last position seen per fader
         self.pending = {}
+        self.nudges = {}            # encoder detents waiting for the next drain
         self.lock = threading.Lock()
 
     # -- drivers ---------------------------------------------------------------
@@ -182,12 +183,17 @@ class Bridge:
         """Everything the surface can show: fader positions and LEDs."""
         for fader in range(1, 9):
             dest = self.destination(fader)
-            value = self._read(dest) if dest else None
-            # Only a fader with a destination AND a readable value gets a
-            # position: sending one to an unmapped fader makes the surface
-            # blink it forever, because nothing will ever align.
-            if value is not None and self.profile.positions:
-                self.send(**mackie.fader_position(fader - 1, value))
+            # The value is read only when it is going to be sent: a read costs
+            # a round trip (117 ms to Spotify through AppleScript, measured
+            # 2026-09-22), and eight of them on every bank change blocked the
+            # surface for the best part of a second. Only a fader with a
+            # destination AND a readable value gets a position: sending one to
+            # an unmapped fader makes the surface blink it forever, because
+            # nothing will ever align.
+            if self.profile.positions and dest:
+                value = self._read(dest)
+                if value is not None:
+                    self.send(**mackie.fader_position(fader - 1, value))
             self.send(**mackie.led(mackie.MUTE + fader - 1, self._is_muted(fader)))
             self.send(**mackie.led(mackie.SOLO + fader - 1, self.soloed == fader))
             self.send(**mackie.led(mackie.REC + fader - 1, self.scene_loaded == fader))
@@ -238,11 +244,21 @@ class Bridge:
 
     # -- encoders --------------------------------------------------------------
     def encoder(self, channel, delta):
-        """An endless knob nudges its destination: no position, no takeover."""
+        """An endless knob nudges its destination: no position, no takeover.
+
+        The detents are only added up here. Applying one costs a read and a
+        write, and a write can take a tenth of a second -- 117 ms to Spotify
+        through AppleScript, measured 2026-09-22 -- so doing it on the MIDI
+        thread makes a spun knob back up every other message on the surface.
+        The drain applies the sum, once."""
         dest = (self.profile.globals.encoders.get(channel + 1)
                 or self.bank.encoders.get(channel + 1))
         if dest is None:
             return
+        with self.lock:
+            self.nudges[dest] = self.nudges.get(dest, 0) + delta
+
+    def _apply_nudge(self, dest, delta):
         current = self._read(dest)
         if current is None:
             self.log(f"  !! {dest.label}: cannot be read, so it cannot be nudged")
@@ -260,6 +276,10 @@ class Bridge:
     def drain(self):
         with self.lock:
             batch, self.pending = self.pending, {}
+            nudges, self.nudges = self.nudges, {}
+        for dest, delta in nudges.items():
+            if delta:
+                self._apply_nudge(dest, delta)
         for channel, value in batch.items():
             dest = self.destination(channel + 1)
             if dest is not None and self._write(dest, value) and self.profile.positions:
