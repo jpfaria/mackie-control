@@ -103,8 +103,10 @@ tonight, and that choice belongs to the user, never to the code.
 
 **Where am I**: a number up to 64 is a row and a column. The **lamp under the
 knob** is the row — it is the fader-position lamp, so the row is shown by a
-pitch bend on that channel, and the flash ends by handing that channel back its
-last known position, which is what stops it blinking. The column says which
+pitch bend on that channel, and the flash ends by handing that channel back **the
+value the gear actually holds**, which is what stops it blinking. A row whose
+fader cannot be read is not shown at all: a knob blinking for ever is worse
+than no number. The column says which
 number it is: **R for the device** (which resource), **S for the scene**. Only what just changed is
 shown — the R row cannot carry two numbers at once — and the real mute and solo
 LEDs come straight back after the flash.

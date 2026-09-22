@@ -314,8 +314,6 @@ def test_bank_change_blinks_row_and_column_three_times():
     b.send = lambda **k: sent.append(k)
     b.bank_index = 11                       # linha 1, coluna 3
     b.flash_bank(sleep=lambda s: None)
-    # a linha e' a lampada do knob, que so acende por pitch bend
-    assert [k["channel"] for k in sent if k["type"] == "pitchwheel"][0] == 1
     assert _acesos(sent, mackie.REC) == [3] * daemon.BLINKS
 
 
@@ -579,17 +577,20 @@ def test_changing_device_shows_it_under_the_knobs_and_on_the_square():
     b.send = lambda **k: sent.append(k)
     b.bank_index = 11                       # row 1, column 3
     b.flash_number(b.bank_index, mackie.REC, sleep=lambda s: None)
-    assert [k["channel"] for k in sent if k["type"] == "pitchwheel"][0] == 1
     assert _acesos(sent, mackie.REC) == [3] * daemon.BLINKS
 
 
-def test_changing_scene_shows_it_under_the_knobs_and_on_the_r_row(rig):
-    b, _ = rig
+def test_changing_scene_shows_it_under_the_knobs_and_on_the_s_row(bridge):
+    b, fake = bridge
+    fake.values["phones"] = 0.4             # fader 2 = row 1, and readable
     sent = []
     b.send = lambda **k: sent.append(k)
     b.flash_number(9, mackie.SOLO, sleep=lambda s: None)   # row 1, column 1
     assert [k["channel"] for k in sent if k["type"] == "pitchwheel"][0] == 1
     assert _acesos(sent, mackie.SOLO) == [1] * daemon.BLINKS
+    # e devolve o valor do aparelho, senao aquele knob pisca para sempre
+    do_canal = [k for k in sent if k["type"] == "pitchwheel" and k["channel"] == 1]
+    assert do_canal[-1] == mackie.fader_position(1, 0.4)
 
 
 def test_the_r_button_and_the_arrows_page_the_same_list():
@@ -608,14 +609,28 @@ def test_the_r_button_and_the_arrows_page_the_same_list():
     assert b.scene_index == 1             # the arrows now carry on from here
 
 
-def test_the_knob_lamp_is_handed_back_so_it_stops_blinking(rig):
+def test_the_knob_lamp_is_handed_back_the_value_in_the_gear(bridge):
     """The knob lamp is the fader-position lamp: a pitch bend sets it blinking
     and it only stops when the fader matches. So the flash ends by sending the
-    position that channel was last seen at (measured 2026-09-22)."""
-    b, _ = rig
-    b.last_seen[(0, 1)] = 0.25
+    value the gear actually holds -- then it blinks only while the physical
+    fader really is out of place, which is the warning the surface exists to
+    give."""
+    b, fake = bridge
+    fake.values["phones"] = 0.4              # fader 2 -> row 1
     sent = []
     b.send = lambda **k: sent.append(k)
     b.flash_number(9, mackie.SOLO, sleep=lambda s: None)
     bends = [k for k in sent if k["type"] == "pitchwheel" and k["channel"] == 1]
-    assert bends[-1] == mackie.fader_position(1, 0.25)
+    assert bends[-1] == mackie.fader_position(1, 0.4)
+
+
+def test_a_row_with_nothing_to_read_is_left_dark_instead_of_blinking():
+    """Nothing to hand back means the blink would never stop, so that row is
+    not shown at all: a knob blinking for ever is worse than no number."""
+    muitos = {"banks": [{"name": f"b{i}", "faders": {}} for i in range(20)]}
+    b = daemon.Bridge(profile.parse_profile(muitos), log=lambda *a: None)
+    sent = []
+    b.send = lambda **k: sent.append(k)
+    b.bank_index = 11
+    b.flash_bank(sleep=lambda s: None)
+    assert not [k for k in sent if k["type"] == "pitchwheel"]

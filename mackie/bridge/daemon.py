@@ -158,14 +158,19 @@ class Bridge:
         row, column = divmod(n, 8)
         if row > 7:                       # beyond 64 there is nothing to show
             return
-        self.send(**mackie.fader_position(row, 0.0))
+        # The row is only shown when there is a value to hand the channel back
+        # afterwards: without one the knob would blink for ever, which is worse
+        # than showing no row at all.
+        dest = self.destination(row + 1)
+        home = self._read(dest) if dest else None
+        if home is not None:
+            self.send(**mackie.fader_position(row, 0.0))
         for _ in range(BLINKS):
             for aceso in (True, False):
                 self.send(**mackie.led(column_row + column, aceso))
                 sleep(BLINK)
-        seen = self.last_seen.get((self.bank_index, row))
-        if seen is not None:
-            self.send(**mackie.fader_position(row, seen))
+        if home is not None:
+            self.send(**mackie.fader_position(row, home))
         self.push_state()                 # real LEDs come back
 
     def push_state(self):
