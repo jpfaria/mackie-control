@@ -14,6 +14,7 @@ from .drivers import Unsupported, build
 
 INTERVAL = 0.03      # s: a fader sends ~40 messages/s, so write only the last
 NEAR = 0.02          # takeover tolerance, in 0..1
+FLASH = 0.9          # s the bank number stays lit after a bank change
 
 
 class Bridge:
@@ -69,6 +70,32 @@ class Bridge:
             self.took_over.clear()
             self.log(f"** bank {i + 1}/{len(self.profile.banks)}: {self.bank.name}")
             self.push_state()
+            self.flash_bank()
+
+    def flash_bank(self, sleep=None):
+        """Flash the bank number without blocking the MIDI loop."""
+        if sleep is None:
+            threading.Thread(target=self._flash, args=(time.sleep,),
+                             daemon=True).start()
+        else:
+            self._flash(sleep)
+
+    def _flash(self, sleep):
+        """Show which bank is now active, then get out of the way.
+
+        The surface has no display and the banks are a list of any length, so
+        the number is shown as a grid: the top row of a channel strip (the mute
+        button, right under the knob) is the row, the square button at the
+        bottom is the column. Eight by eight addresses 64 banks. It is a flash,
+        not a state: `push_state` puts the real LEDs back right after."""
+        row, column = divmod(self.bank_index, 8)
+        if row > 7:                       # beyond 64 banks there is nothing to show
+            return
+        for i in range(8):
+            self.send(**mackie.led(mackie.MUTE + i, i == row))
+            self.send(**mackie.led(mackie.SELECT + i, i == column))
+        sleep(FLASH)
+        self.push_state()                 # real LEDs come back
 
     def push_state(self):
         """Everything the surface can show: fader positions and LEDs."""

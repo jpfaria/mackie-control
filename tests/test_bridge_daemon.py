@@ -297,3 +297,53 @@ def test_a_driver_without_that_button_does_nothing(bridge):
     b, fake = bridge
     b.on_midi(mido.Message("note_on", note=mackie.PLAY, velocity=127))   # FakeDriver.BUTTONS = {}
     assert not hasattr(fake, "ran")
+
+
+def _acesos(sent, base):
+    return [k["note"] - base for k in sent
+            if k["type"] == "note_on" and base <= k["note"] < base + 8
+            and k["velocity"] == mackie.ON]
+
+
+def test_bank_change_flashes_row_and_column():
+    muitos = {"banks": [{"name": f"b{i}", "faders": {}} for i in range(20)]}
+    b = daemon.Bridge(profile.parse_profile(muitos), log=lambda *a: None)
+    sent = []
+    b.send = lambda **k: sent.append(k)
+    b.bank_index = 11                       # linha 1, coluna 3
+    b.flash_bank(sleep=lambda s: None)
+    assert _acesos(sent, mackie.MUTE) == [1]
+    assert _acesos(sent, mackie.SELECT) == [3]
+
+
+def test_the_first_bank_flashes_the_first_cell():
+    b = daemon.Bridge(profile.parse_profile(PROFILE), log=lambda *a: None)
+    sent = []
+    b.send = lambda **k: sent.append(k)
+    b.flash_bank(sleep=lambda s: None)
+    assert _acesos(sent, mackie.MUTE) == [0] and _acesos(sent, mackie.SELECT) == [0]
+
+
+def test_beyond_64_banks_there_is_nothing_to_flash():
+    muitos = {"banks": [{"name": f"b{i}", "faders": {}} for i in range(70)]}
+    b = daemon.Bridge(profile.parse_profile(muitos), log=lambda *a: None)
+    sent = []
+    b.send = lambda **k: sent.append(k)
+    b.bank_index = 64
+    b.flash_bank(sleep=lambda s: None)
+    assert not sent
+
+
+def test_the_flash_puts_the_real_leds_back_on_its_own(bridge):
+    b, _ = bridge
+    sent = []
+    b.send = lambda **k: sent.append(k)
+    b.flash_bank(sleep=lambda s: None)
+    # depois do flash o proprio push_state roda: as ultimas mensagens de LED
+    # sao o estado real, nao a grade
+    ultimos = {}
+    for k in sent:
+        if k["type"] == "note_on":
+            ultimos[k["note"]] = k["velocity"]
+    assert ultimos[mackie.MUTE] == mackie.OFF
+    assert ultimos[mackie.SELECT] == mackie.OFF
