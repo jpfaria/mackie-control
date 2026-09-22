@@ -218,6 +218,30 @@ class Bridge:
         elif isinstance(event, mackie.Button) and event.pressed:
             self.button(event)
 
+    def bank_driver(self):
+        """The driver a bank's global buttons belong to: the one most of its
+        faders use. With a single driver per bank (the usual case) this is just
+        that driver."""
+        nomes = [d.driver for d in self.bank.faders.values()]
+        return max(set(nomes), key=nomes.count) if nomes else None
+
+    def default_button(self, kind):
+        """What the bank's driver says this button does, if the profile did
+        not say. A driver declares its own buttons in BUTTONS."""
+        nome = self.bank_driver()
+        if nome is None:
+            return None
+        try:
+            drv = self.driver(nome)
+        except Exception:
+            return None
+        comando = type(drv).BUTTONS.get(kind)
+        if comando is None:
+            return None
+        alvo = next((d.target for d in self.bank.faders.values()
+                     if d.driver == nome), None)
+        return nome, alvo, comando
+
     def button(self, b):
         actions = self.bank.buttons
         if b.kind in ("bank_right", "arrow_right"):
@@ -228,12 +252,20 @@ class Bridge:
             self.mute(b.channel + 1)
         elif b.kind == "solo":
             self.solo(b.channel + 1)
-        elif b.kind == "rec" and actions.get("rec", "scene") == "scene":
+        elif b.kind == "rec" and (actions.get("rec") == "scene"
+                                  or ("rec" not in actions
+                                      and (self.default_button("rec") or (None, None, None))[2] == "scene")):
             self.scene(b.channel + 1)
         elif b.kind == "select" and actions.get("select") == "bank":
             self.select_bank(b.channel)
         elif b.kind in self.bank.transport:
             self.run_command(self.bank.transport[b.kind], b.kind)
+        else:
+            padrao = self.default_button(b.kind)
+            if padrao is not None:
+                nome, alvo, comando = padrao
+                from .profile import Command
+                self.run_command(Command(nome, alvo, comando), b.kind)
 
     def run_command(self, cmd, label):
         try:

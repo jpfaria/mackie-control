@@ -10,6 +10,7 @@ from . import Driver, Unsupported
 
 class HD8(Driver):
     name = "hd8"
+    BUTTONS = {"rec": "scene"}        # R n loads the n-th stored scene
 
     def __init__(self, client=None):
         if client is None:

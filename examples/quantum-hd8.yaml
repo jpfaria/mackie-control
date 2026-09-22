@@ -23,11 +23,10 @@ banks:
       6: {driver: hd8, target: line/ch2/volume,  label: GUITAR 2, group: in, mute: line/ch2/mute}
       7: {driver: hd8, target: line/ch19/volume, label: GUITAR 3, group: in, mute: line/ch19/mute}
       8: {driver: hd8, target: line/ch20/volume, label: GUITAR 4, group: in, mute: line/ch20/mute}
-    buttons:
-      rec: scene      # R n loads the n-th scene stored in the interface
-      # banks page with Channel < / > and the arrows -- no button to configure
+    # No buttons block: the hd8 driver already says R = load scene, and
+    # banks page with Channel < / > and the arrows.
 
   - name: Mac
     faders:
-      1: {driver: mac, label: System volume}
-      2: {driver: app, target: Spotify, label: Spotify}
+      1: {driver: app, target: Spotify, label: Spotify}   # the app driver brings
+      2: {driver: mac, label: System volume}              # play/stop/next/previous

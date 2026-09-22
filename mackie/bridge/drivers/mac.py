@@ -46,6 +46,8 @@ class MacVolume(Driver):
 class AppVolume(Driver):
     """target = the application name, e.g. "Spotify"."""
     name = "app"
+    BUTTONS = {"play": "playpause", "stop": "pause",
+               "forward": "next track", "rewind": "previous track"}
 
     def read(self, target):
         try:

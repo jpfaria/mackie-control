@@ -20,6 +20,12 @@ class Unsupported(Exception):
 class Driver:
     name = "driver"
 
+    # Buttons this driver knows what to do with, as {button: command}. The
+    # bridge uses these when the profile says nothing, so a profile does not
+    # have to repeat what a driver already knows. "scene" is special: it means
+    # load_scene(), everything else goes to command().
+    BUTTONS: dict[str, str] = {}
+
     def read(self, target):
         raise Unsupported(f"{self.name}: read {target}")
 

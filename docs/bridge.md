@@ -37,7 +37,10 @@ banks:
   remembered and handed back — the HD 8 has no mute for its headphone outputs.
 - **Banks always page with Channel ◀/▶ and with the arrows ◀/▶.** That is the
   default and needs no configuration.
-- `rec: scene` makes R n load the n-th scene of that fader's driver.
+- `rec: scene` makes R n load the n-th scene of that fader's driver. You rarely
+  need to write it: **each driver declares the buttons it can use** (`hd8` →
+  R = scene; `app` → play, stop, next, previous), and the bridge falls back to
+  that. The profile only has to speak up when it wants something different.
 - `select: bank` is optional: it makes the square button n jump straight to bank
   n. Left out (the default), the square buttons do nothing.
 

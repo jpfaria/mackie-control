@@ -8,6 +8,7 @@ from mackie.bridge.drivers import Driver, Unsupported
 
 class FakeDriver(Driver):
     name = "fake"
+    BUTTONS = {"rec": "scene"}      # like a mixer: R loads a stored scene
 
     def __init__(self):
         self.values = {"main": 0.5, "phones": 0.4, "g1": 0.2, "g2": 0.8,
@@ -255,3 +256,44 @@ def test_push_state_skips_a_destination_it_cannot_read():
     b.send = lambda **k: sent.append(k)
     b.push_state()
     assert not [k for k in sent if k["type"] == "pitchwheel"]
+
+
+class DriverComBotoes(Commandable):
+    BUTTONS = {"play": "playpause", "rec": "scene"}
+
+
+BANCO_SIMPLES = {"banks": [{"name": "app", "faders": {
+    1: {"driver": "fake", "target": "Spotify", "label": "SPOTIFY"}}}]}
+
+
+def test_driver_declares_its_own_buttons():
+    fake = DriverComBotoes()
+    b = daemon.Bridge(profile.parse_profile(BANCO_SIMPLES), drivers={"fake": fake},
+                      log=lambda *a: None)
+    b.on_midi(mido.Message("note_on", note=mackie.PLAY, velocity=127))
+    assert fake.ran == [("Spotify", "playpause")]
+
+
+def test_a_driver_button_of_kind_scene_loads_a_scene():
+    fake = DriverComBotoes()
+    b = daemon.Bridge(profile.parse_profile(BANCO_SIMPLES), drivers={"fake": fake},
+                      log=lambda *a: None)
+    b.on_midi(mido.Message("note_on", note=mackie.REC, velocity=127))
+    assert fake.loaded == "ONE"
+
+
+def test_the_profile_wins_over_the_driver_default():
+    fake = DriverComBotoes()
+    perfil = {"banks": [dict(BANCO_SIMPLES["banks"][0],
+                             transport={"play": {"driver": "fake", "target": "Outro",
+                                                 "command": "pause"}})]}
+    b = daemon.Bridge(profile.parse_profile(perfil), drivers={"fake": fake},
+                      log=lambda *a: None)
+    b.on_midi(mido.Message("note_on", note=mackie.PLAY, velocity=127))
+    assert fake.ran == [("Outro", "pause")]
+
+
+def test_a_driver_without_that_button_does_nothing(bridge):
+    b, fake = bridge
+    b.on_midi(mido.Message("note_on", note=mackie.PLAY, velocity=127))   # FakeDriver.BUTTONS = {}
+    assert not hasattr(fake, "ran")

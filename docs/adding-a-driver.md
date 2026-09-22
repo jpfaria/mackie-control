@@ -11,6 +11,22 @@ scenes()              -> list of names
 load_scene(index)     -> the name loaded
 ```
 
+A driver also declares **which buttons it knows what to do with**:
+
+```python
+class HD8(Driver):
+    BUTTONS = {"rec": "scene"}                    # R n loads the n-th scene
+
+class AppVolume(Driver):
+    BUTTONS = {"play": "playpause", "stop": "pause",
+               "forward": "next track", "rewind": "previous track"}
+```
+
+The bridge uses those whenever the profile says nothing, so a profile never has
+to repeat what a driver already knows — and a bank made of gear that has no
+transport simply has dead transport buttons. `"scene"` is the one special
+value: it means `load_scene()`. Anything else is passed to `command()`.
+
 Rules that came out of real bugs:
 
 - **Raise `Unsupported`, never crash.** The bridge logs it and carries on. One
