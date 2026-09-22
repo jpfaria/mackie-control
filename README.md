@@ -34,6 +34,13 @@ mackie bridge my-rig.yaml            # run the bridge
 
 ```yaml
 surface: smc-mixer
+
+global:                 # always in reach, whichever bank is selected
+  encoders:
+    1: {driver: app, target: Spotify, label: Spotify}   # endless knob: no takeover
+  transport:
+    play: {driver: app, target: Spotify, command: playpause}
+
 banks:
   - name: HD 8
     faders:
@@ -59,6 +66,16 @@ A different rig is a different file. Nothing about a rig goes into the code.
 | `label` | the name that shows up in the log |
 | `group` | `in` or `out` — **solo only acts inside the group** |
 | `mute` | the device's own mute parameter; without one, M zeroes the value and gives it back |
+
+Faders jump to a position, so they wait for **takeover**: a fader starts writing
+only once it crosses the value already in the gear. Encoders are endless knobs —
+they nudge, so they need none of that.
+
+| Block | What it holds |
+|---|---|
+| `banks:` | the list of banks; page through them with Channel ◀ / ▶ or the arrows, any number of them |
+| `global:` | faders, encoders and transport that work in **every** bank (a global fader wins over the bank's) |
+| `positions: true` | send fader values back, so the surface blinks a channel until its fader matches (off by default) |
 
 ## Documentation
 

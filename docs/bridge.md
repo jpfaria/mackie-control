@@ -94,3 +94,16 @@ with a top-level `positions: true` in the profile.
 ```bash
 mackie bridge examples/minimal.yaml
 ```
+
+## Where things live
+
+| Question | File |
+|---|---|
+| What does the surface send? | [`protocol.md`](protocol.md), [`smc-mixer.md`](smc-mixer.md) |
+| How do I map a new controller? | [`adding-a-surface.md`](adding-a-surface.md) |
+| How do I control new gear? | [`adding-a-driver.md`](adding-a-driver.md) |
+| What can a profile say? | this file, plus [`../examples/`](../examples/) |
+| Why is it built this way? | [`../CLAUDE.md`](../CLAUDE.md) — the rules that came out of real bugs |
+
+Everything in these docs was measured on hardware, with the date. When a
+measurement contradicts a manual, the measurement wins and the doc says so.

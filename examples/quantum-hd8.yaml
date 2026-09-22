@@ -10,6 +10,17 @@
 # guitars and leaves the monitors alone.
 surface: smc-mixer
 
+# Always in reach, whichever bank is selected. A knob is endless, so it needs no
+# takeover -- a good home for something you want from anywhere.
+global:
+  encoders:
+    1: {driver: app, target: Spotify, label: Spotify volume}
+  transport:
+    play:    {driver: app, target: Spotify, command: playpause}
+    stop:    {driver: app, target: Spotify, command: pause}
+    forward: {driver: app, target: Spotify, command: next track}
+    rewind:  {driver: app, target: Spotify, command: previous track}
+
 banks:
   - name: HD 8
     faders:
