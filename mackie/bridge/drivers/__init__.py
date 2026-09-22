@@ -43,6 +43,12 @@ class Driver:
     def command(self, target, name):
         raise Unsupported(f"{self.name}: command {name!r}")
 
+    def playing(self, target):
+        """True while the target is playing, False while it is not, None when
+        there is nothing to ask -- the app is closed, or the driver has no
+        player at all. The lamps of a transport button follow this."""
+        return None
+
     def scenes(self):
         return []
 

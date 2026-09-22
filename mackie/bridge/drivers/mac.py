@@ -61,6 +61,17 @@ class AppVolume(Driver):
     def toggle(self, target):
         return self.command(target, "playpause")
 
+    def playing(self, target):
+        """None while the app is closed -- asking a closed app about its
+        player would launch it, which is not what a lamp is worth."""
+        try:
+            if _osascript(f'application "{target}" is running').strip() != "true":
+                return None
+            estado = _osascript(f'tell application "{target}" to player state')
+        except subprocess.CalledProcessError:
+            return None
+        return estado.strip() == "playing"
+
     def command(self, target, name):
         """Any AppleScript command the app understands: playpause, pause,
         next track, previous track..."""

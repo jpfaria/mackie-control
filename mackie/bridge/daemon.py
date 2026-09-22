@@ -17,6 +17,7 @@ NEAR = 0.02          # takeover tolerance, in 0..1
 STEP = 1 / 64        # how much one encoder detent moves a value
 BLINKS = 3           # how many times the bank number blinks after a change
 BLINK = 0.12         # s of each on and each off phase
+TRANSPORT_EVERY = 1.0    # s between asks of "is it playing?"
 
 
 class Bridge:
@@ -206,6 +207,23 @@ class Bridge:
             else:
                 self.send(**mackie.led(mackie.SELECT + fader - 1, False))
 
+    def push_transport(self):
+        """Light a transport button while its player is playing, and leave it
+        dark while the app is closed: a lamp that is on for an app that is not
+        running says nothing true. Asking costs a round trip, so this runs on
+        the drain thread, never on the MIDI one."""
+        ligado = dict(self.bank.transport)
+        ligado.update(self.profile.globals.transport)
+        for kind, cmd in ligado.items():
+            note = getattr(mackie, kind.upper(), None)
+            if note is None:
+                continue
+            try:
+                tocando = self.driver(cmd.driver).playing(cmd.target)
+            except Exception:
+                tocando = None
+            self.send(**mackie.led(note, bool(tocando) and kind == "play"))
+
     def _is_muted(self, fader):
         dest = self.destination(fader)
         if dest is None:
@@ -268,10 +286,19 @@ class Bridge:
             self.log(f"  .. {dest.label} {new:.2f}")
 
     def drain_forever(self):
-        """Apply the last position of each fader. Runs in its own thread."""
+        """Apply the last position of each fader, and keep the transport lamps
+        honest. Runs in its own thread, because both can block."""
+        desde = 0.0
         while True:
             time.sleep(INTERVAL)
             self.drain()
+            desde += INTERVAL
+            if desde >= TRANSPORT_EVERY:
+                desde = 0.0
+                try:
+                    self.push_transport()
+                except Exception as e:                  # pragma: no cover
+                    self.log(f"  !! transport: {e}")
 
     def drain(self):
         with self.lock:

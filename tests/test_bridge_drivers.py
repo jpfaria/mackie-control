@@ -126,3 +126,21 @@ def test_hd8_closes_the_dead_client_before_reconnecting():
     d = hd8.HD8(client=dead, connect=FakeClient)
     d.write("global/mainOutVolume", 0.25)
     assert dead.closed is True
+
+
+def test_app_reports_nothing_when_the_app_is_not_open(monkeypatch):
+    """A closed app must not be asked about its player: AppleScript would
+    launch it (2026-09-22)."""
+    monkeypatch.setattr(mac, "_osascript", lambda s: "false")
+    assert mac.AppVolume().playing("Spotify") is None
+
+
+def test_app_reports_whether_it_is_playing(monkeypatch):
+    respostas = {"running": "true", "state": "playing"}
+    monkeypatch.setattr(mac, "_osascript",
+                        lambda s: respostas["running"] if "is running" in s
+                        else respostas["state"])
+    d = mac.AppVolume()
+    assert d.playing("Spotify") is True
+    respostas["state"] = "paused"
+    assert d.playing("Spotify") is False

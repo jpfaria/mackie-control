@@ -697,3 +697,60 @@ def test_push_state_reads_nothing_when_positions_are_off():
                       log=lambda *a: None)
     b.push_state()
     assert [t for t in lido if not t.endswith("/mute")] == []
+
+
+# -- transport lamps follow the player (2026-09-22) --------------------------
+
+class Player(FakeDriver):
+    name = "fake"
+    BUTTONS = {"play": "playpause"}
+
+    def __init__(self):
+        super().__init__()
+        self.state = None            # None = the app is not open
+
+    def playing(self, target):
+        return self.state
+
+
+TRANSPORTE = {"banks": [{"name": "rig", "faders": {}}],
+              "global": {"transport": {"play": {"driver": "fake",
+                                                "target": "Spotify",
+                                                "command": "playpause"}}}}
+
+
+def _com_player():
+    p = Player()
+    b = daemon.Bridge(profile.parse_profile(TRANSPORTE), drivers={"fake": p},
+                      log=lambda *a: None)
+    return b, p
+
+
+def test_the_play_lamp_is_dark_while_the_app_is_closed():
+    b, p = _com_player()
+    sent = []
+    b.send = lambda **k: sent.append(k)
+    b.push_transport()
+    assert [k["velocity"] for k in sent if k["note"] == mackie.PLAY] == [mackie.OFF]
+
+
+def test_the_play_lamp_lights_while_it_plays():
+    b, p = _com_player()
+    p.state = True
+    sent = []
+    b.send = lambda **k: sent.append(k)
+    b.push_transport()
+    assert [k["velocity"] for k in sent if k["note"] == mackie.PLAY] == [mackie.ON]
+    p.state = False
+    sent.clear()
+    b.push_transport()
+    assert [k["velocity"] for k in sent if k["note"] == mackie.PLAY] == [mackie.OFF]
+
+
+def test_the_player_is_asked_only_when_something_is_bound_to_it(bridge):
+    """No transport in the profile, no round trip to any app."""
+    b, _ = bridge
+    sent = []
+    b.send = lambda **k: sent.append(k)
+    b.push_transport()
+    assert not sent

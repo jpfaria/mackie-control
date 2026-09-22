@@ -137,6 +137,18 @@ the gear switched off:
 2  Mac      (mac)   2 faders   no scenes
 ```
 
+## Transport lamps
+
+The play button lights while its player is playing and goes dark when it
+pauses. While the app is **closed** the lamp stays dark and the app is not
+asked again — asking a closed app about its player would launch it, and a lamp
+lit for an app that is not running says nothing true.
+
+Asking costs a round trip (117 ms to Spotify through AppleScript, measured
+2026-09-22), so it happens once a second on the drain thread, never on the MIDI
+one. A driver says what it knows by implementing `playing(target)`: `True`,
+`False`, or `None` for "nothing to ask".
+
 ## Losing the surface and getting it back
 
 Switching the surface off takes its port out of CoreMIDI **without any error
