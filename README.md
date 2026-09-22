@@ -111,6 +111,21 @@ they nudge, so they need none of that.
 | `global:` | faders, encoders and transport that work in **every** bank (a global fader wins over the bank's) |
 | `positions: true` | send fader values back, so the surface blinks a channel until its fader matches (off by default) |
 
+## The skill, as a plugin
+
+Configuring a device is judgement, not typing: which parameter a fader should
+touch, and how to prove it does anything. That is packaged as a Claude Code
+plugin, so it works without cloning this repo:
+
+```
+/plugin marketplace add jpfaria/mackie-control
+/plugin install mackie-control@mackie-control
+```
+
+It teaches the loop the bugs here came from skipping — read the rig's own
+notes, prove the target moves, prove it moves the thing on the label, hand
+borrowed state back — and lives in [`skills/configuring-devices`](skills/configuring-devices/SKILL.md).
+
 ## Documentation
 
 - [`docs/bridge.md`](docs/bridge.md) — the bridge, the drivers, the profile, the feedback

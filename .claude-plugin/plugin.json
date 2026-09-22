@@ -1,0 +1,15 @@
+{
+  "name": "mackie-control",
+  "displayName": "Mackie Control",
+  "description": "Put a piece of gear on a Mackie control surface: write the rig profile, choose what each fader and scene button touches, add a driver.",
+  "version": "0.2.0",
+  "author": {
+    "name": "João Paulo Faria",
+    "email": "jpfaria@gmail.com"
+  },
+  "keywords": ["mackie", "midi", "control-surface", "audio", "mixer"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jpfaria/mackie-control"
+  }
+}

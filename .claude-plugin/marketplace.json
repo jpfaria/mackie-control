@@ -1,0 +1,18 @@
+{
+  "name": "mackie-control",
+  "description": "The Mackie Control plugin: how to put a piece of gear on a control surface and write the rig profile for it.",
+  "owner": {
+    "name": "João Paulo Faria",
+    "email": "jpfaria@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "mackie-control",
+      "source": {
+        "source": "github",
+        "repo": "jpfaria/mackie-control"
+      },
+      "description": "Put a piece of gear on a Mackie control surface: write the rig profile, choose what each fader and scene button touches, add a driver."
+    }
+  ]
+}
