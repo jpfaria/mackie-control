@@ -75,7 +75,11 @@ class Bridge:
         for fader in range(1, 9):
             dest = self.destination(fader)
             value = self._read(dest) if dest else None
-            self.send(**mackie.fader_position(fader - 1, value if value is not None else 0.0))
+            # Only a fader with a destination AND a readable value gets a
+            # position: sending one to an unmapped fader makes the surface
+            # blink it forever, because nothing will ever align.
+            if value is not None:
+                self.send(**mackie.fader_position(fader - 1, value))
             self.send(**mackie.led(mackie.MUTE + fader - 1, self._is_muted(fader)))
             self.send(**mackie.led(mackie.SOLO + fader - 1, self.soloed == fader))
             self.send(**mackie.led(mackie.REC + fader - 1, self.scene_loaded == fader))
@@ -221,3 +225,12 @@ class Bridge:
             self.scene(b.channel + 1)
         elif b.kind == "select" and actions.get("select", "bank") == "bank":
             self.select_bank(b.channel)
+        elif b.kind in self.bank.transport:
+            self.run_command(self.bank.transport[b.kind], b.kind)
+
+    def run_command(self, cmd, label):
+        try:
+            self.driver(cmd.driver).command(cmd.target, cmd.command)
+            self.log(f"  -> {label}: {cmd.command}")
+        except Exception as e:
+            self.log(f"  !! {label}: {e}")

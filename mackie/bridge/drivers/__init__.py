@@ -6,6 +6,7 @@ bridge only ever calls this interface:
     toggle(target) -> the new state
     scenes()       -> list of names
     load_scene(i)
+    command(target, name)  -> run a named command (play, next track, ...)
 
 A driver that cannot do something raises Unsupported -- the bridge turns that
 into a warning, never a crash."""
@@ -27,6 +28,9 @@ class Driver:
 
     def toggle(self, target):
         raise Unsupported(f"{self.name}: toggle {target}")
+
+    def command(self, target, name):
+        raise Unsupported(f"{self.name}: command {name!r}")
 
     def scenes(self):
         return []

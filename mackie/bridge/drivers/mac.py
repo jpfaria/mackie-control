@@ -57,5 +57,13 @@ class AppVolume(Driver):
         _osascript(f'tell application "{target}" to set sound volume to {round(value * 100)}')
 
     def toggle(self, target):
-        _osascript(f'tell application "{target}" to playpause')
+        return self.command(target, "playpause")
+
+    def command(self, target, name):
+        """Any AppleScript command the app understands: playpause, pause,
+        next track, previous track..."""
+        try:
+            _osascript(f'tell application "{target}" to {name}')
+        except subprocess.CalledProcessError as e:
+            raise Unsupported(f"{target} refused {name!r}: {e}") from e
         return True

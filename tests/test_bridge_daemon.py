@@ -173,3 +173,64 @@ def test_push_state_sends_positions_and_leds(bridge):
     assert any(k["type"] == "pitchwheel" for k in sent)
     select = [k for k in sent if k["type"] == "note_on" and k["note"] == mackie.SELECT]
     assert select and select[0]["velocity"] == mackie.ON
+
+
+class Commandable(FakeDriver):
+    def __init__(self):
+        super().__init__()
+        self.ran = []
+
+    def command(self, target, name):
+        self.ran.append((target, name))
+        return True
+
+
+TRANSPORT = {"banks": [{"name": "rig", "faders": {},
+                        "transport": {"play": {"driver": "fake", "target": "Spotify",
+                                               "command": "playpause"},
+                                      "forward": {"driver": "fake", "target": "Spotify",
+                                                  "command": "next track"}}}]}
+
+
+def test_transport_buttons_run_the_profiles_command():
+    fake = Commandable()
+    b = daemon.Bridge(profile.parse_profile(TRANSPORT), drivers={"fake": fake},
+                      log=lambda *a: None)
+    b.on_midi(mido.Message("note_on", note=mackie.PLAY, velocity=127))
+    b.on_midi(mido.Message("note_on", note=mackie.FORWARD, velocity=127))
+    assert fake.ran == [("Spotify", "playpause"), ("Spotify", "next track")]
+
+
+def test_a_transport_button_with_no_entry_is_ignored(bridge):
+    b, _ = bridge
+    b.on_midi(mido.Message("note_on", note=mackie.PLAY, velocity=127))   # must not raise
+
+
+def test_a_driver_that_cannot_run_the_command_only_warns():
+    linhas = []
+    b = daemon.Bridge(profile.parse_profile(TRANSPORT),
+                      drivers={"fake": FakeDriver()}, log=linhas.append)
+    b.on_midi(mido.Message("note_on", note=mackie.PLAY, velocity=127))
+    assert any("play" in l for l in linhas)
+
+
+def test_push_state_does_not_send_positions_for_unmapped_faders(bridge):
+    b, _ = bridge
+    sent = []
+    b.send = lambda **k: sent.append(k)
+    b.push_state()
+    canais = {k["channel"] for k in sent if k["type"] == "pitchwheel"}
+    assert canais == {0, 1, 4, 5}        # os quatro faders do perfil, so eles
+
+
+def test_push_state_skips_a_destination_it_cannot_read():
+    class Cego(FakeDriver):
+        def read(self, target):
+            raise RuntimeError("sem leitura")
+
+    b = daemon.Bridge(profile.parse_profile(PROFILE), drivers={"fake": Cego()},
+                      log=lambda *a: None)
+    sent = []
+    b.send = lambda **k: sent.append(k)
+    b.push_state()
+    assert not [k for k in sent if k["type"] == "pitchwheel"]

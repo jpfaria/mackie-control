@@ -9,6 +9,9 @@
         buttons:
           rec: scene        # R n loads scene n of that fader's driver
           select: bank      # the square button n selects bank n
+        transport:          # the buttons along the bottom edge
+          play: {driver: app, target: Spotify, command: playpause}
+          forward: {driver: app, target: Spotify, command: next track}
 
 A fader with `mute:` is muted with that parameter; one without is muted by
 zeroing its own value, which is remembered and handed back. `group` keeps solo
@@ -33,10 +36,18 @@ class Destination:
 
 
 @dataclass(frozen=True)
+class Command:
+    driver: str
+    target: str | None
+    command: str
+
+
+@dataclass(frozen=True)
 class Bank:
     name: str
     faders: dict[int, Destination] = field(default_factory=dict)
     buttons: dict[str, str] = field(default_factory=dict)
+    transport: dict[str, Command] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -56,6 +67,13 @@ def _destination(raw: dict) -> Destination:
                        group=raw.get("group", "out"), mute=raw.get("mute"))
 
 
+def _command(raw: dict) -> Command:
+    if "driver" not in raw or "command" not in raw:
+        raise SystemExit(f"transport entry needs driver and command: {raw}")
+    return Command(driver=raw["driver"], target=raw.get("target"),
+                   command=raw["command"])
+
+
 def parse_profile(data: dict) -> Profile:
     banks = data.get("banks") or []
     if not banks:
@@ -64,7 +82,9 @@ def parse_profile(data: dict) -> Profile:
         surface=data.get("surface", "smc-mixer"),
         banks=[Bank(name=b.get("name", f"bank {i + 1}"),
                     faders={int(k): _destination(v) for k, v in (b.get("faders") or {}).items()},
-                    buttons=dict(b.get("buttons") or {}))
+                    buttons=dict(b.get("buttons") or {}),
+                    transport={k: _command(v)
+                               for k, v in (b.get("transport") or {}).items()})
                for i, b in enumerate(banks)],
     )
 
