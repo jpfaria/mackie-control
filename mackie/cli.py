@@ -51,10 +51,11 @@ def cmd_watch(a):
 def cmd_devices(a):
     """What each bank is: its device, its faders and the scenes it can load."""
     from .bridge import describe as desc
+    from .bridge.defaults import expand
     from .bridge.drivers import build
     from .bridge.profile import load_profile
 
-    profile = load_profile(a.profile)
+    profile = expand(load_profile(a.profile))
     drivers = {}
     for bank in profile.banks:
         name = bank.driver or desc._main_driver(bank)

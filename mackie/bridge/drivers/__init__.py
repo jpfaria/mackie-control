@@ -26,6 +26,11 @@ class Driver:
     # load_scene(), everything else goes to command().
     BUTTONS: dict[str, str] = {}
 
+    # The banks this device is worth on its own, as a profile would write them:
+    # the same gear has the same knobs in every rig, so the map belongs to the
+    # driver. A profile that writes its own faders is never touched.
+    DEFAULT_BANKS: list[dict] = []
+
     def read(self, target):
         raise Unsupported(f"{self.name}: read {target}")
 
@@ -45,9 +50,15 @@ class Driver:
         raise Unsupported(f"{self.name}: scenes")
 
 
-def build(name: str, **opts) -> Driver:
+def classes() -> dict[str, type]:
+    """The driver classes, without building any: reading a class attribute
+    (its default banks, its buttons) must not open a connection to gear."""
     from . import hd8, mac
-    known = {"hd8": hd8.HD8, "mac": mac.MacVolume, "app": mac.AppVolume}
+    return {"hd8": hd8.HD8, "mac": mac.MacVolume, "app": mac.AppVolume}
+
+
+def build(name: str, **opts) -> Driver:
+    known = classes()
     try:
         return known[name](**opts)
     except KeyError:

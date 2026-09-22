@@ -77,6 +77,22 @@ fights with where the control physically sits.
 Controlling the music has nothing to do with which set of faders you are on —
 without this, play does nothing while you are looking at the mixer bank.
 
+## A device's own banks
+
+The same gear has the same knobs in every rig, so what a device is worth
+belongs to its driver. A bank that names a `driver:` and no faders is replaced
+by that driver's own banks:
+
+```yaml
+banks:
+  - driver: hd8        # becomes "HD 8 IN" and "HD 8 OUT", eight faders each
+```
+
+`hd8` ships two: **IN**, the eight analogue channels with their mutes, and
+**OUT**, the main output, the two headphone outs and the five ADAT buses. A
+bank that writes its own faders is never touched — the default is a starting
+point, not a straitjacket, and a rig that needs four of each writes four.
+
 ## Devices and scenes
 
 A bank is a device. The arrows move through both:

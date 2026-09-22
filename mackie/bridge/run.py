@@ -14,6 +14,7 @@ import mido
 
 from ..surfaces import get as get_surface
 from .daemon import Bridge
+from .defaults import expand
 from .profile import load_profile
 
 POLL = 0.005        # s between reads of the surface
@@ -42,7 +43,7 @@ def _present(hints, names) -> str | None:
 
 def run(profile_path: str, port: str | None = None, log=print,
         midi=mido, sleep=time.sleep, watch: float = WATCH) -> None:
-    profile = load_profile(profile_path)
+    profile = expand(load_profile(profile_path))
     surface = get_surface(profile.surface)
     hints = (port,) if port else surface.port_hints
 

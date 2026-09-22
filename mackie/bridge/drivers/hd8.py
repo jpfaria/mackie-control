@@ -28,6 +28,29 @@ class HD8(Driver):
     name = "hd8"
     BUTTONS = {"rec": "scene"}        # R n loads the n-th stored scene
 
+    # Two banks, because that is how the desk is read: what comes in, and
+    # where it goes. The eight analogue inputs are the eight the HD 8 has;
+    # `aux/ch(4+k)` is the ADAT k/k+1 bus (measured, quantum-hd8 docs).
+    DEFAULT_BANKS = [
+        {"name": "HD 8 IN",
+         "faders": {n: {"driver": "hd8", "target": f"line/ch{n}/volume",
+                        "label": f"IN {n}", "group": "in",
+                        "mute": f"line/ch{n}/mute"}
+                    for n in range(1, 9)}},
+        {"name": "HD 8 OUT",
+         "faders": {
+             1: {"driver": "hd8", "target": "global/mainOutVolume",
+                 "label": "MAIN", "group": "out", "mute": "global/mute"},
+             2: {"driver": "hd8", "target": "global/phones1_volume",
+                 "label": "PHONES 1", "group": "out"},
+             3: {"driver": "hd8", "target": "global/phones2_volume",
+                 "label": "PHONES 2", "group": "out"},
+             **{3 + k: {"driver": "hd8", "target": f"aux/ch{4 + k}/volume",
+                        "label": f"ADAT {2 * k - 1}/{2 * k}", "group": "out",
+                        "mute": f"aux/ch{4 + k}/mute"}
+                for k in range(1, 6)}}},
+    ]
+
     def __init__(self, client=None, connect=None):
         # A client passed without a way to rebuild it (the tests) cannot be
         # reconnected: the driver then refuses instead of crashing.
