@@ -107,6 +107,7 @@ they nudge, so they need none of that.
 |---|---|
 | `banks:` | the list of devices; ▲ / ▼ or Channel ◀ / ▶ moves between them, any number |
 | `scenes:` | which scenes of that device, in which order; left out, the device's own list |
+| `default:` | which of the driver's own banks this is (`IN`, `OUT`); left out on a bank with no faders, all of them |
 | `global:` | faders, encoders and transport that work in **every** bank (a global fader wins over the bank's) |
 | `positions: true` | send fader values back, so the surface blinks a channel until its fader matches (off by default) |
 
@@ -124,4 +125,4 @@ they nudge, so they need none of that.
 python3 -m pytest -q
 ```
 
-102 tests, no hardware: drivers and surfaces go in by injection.
+105 tests, no hardware: drivers and surfaces go in by injection.

@@ -74,6 +74,9 @@ class Bank:
     # list is used: the profile speaks up only when a night needs four of the
     # thirty presets the gear holds.
     scenes: list[str] = field(default_factory=list)
+    # Which of the driver's own banks this one is ("IN", "OUT", ...). Left out
+    # on a bank with no faders, every one of them is used.
+    default: str | None = None
     faders: dict[int, Destination] = field(default_factory=dict)
     encoders: dict[int, Destination] = field(default_factory=dict)
     buttons: dict[str, str] = field(default_factory=dict)
@@ -145,6 +148,7 @@ def parse_profile(data: dict) -> Profile:
         banks=[Bank(name=b.get("name", f"bank {i + 1}"),
                     driver=b.get("driver"),
                     scenes=list(b.get("scenes") or []),
+                    default=b.get("default"),
                     faders={int(k): _destination(v) for k, v in (b.get("faders") or {}).items()},
                     encoders={int(k): _destination(v)
                               for k, v in (b.get("encoders") or {}).items()},

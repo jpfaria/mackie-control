@@ -19,6 +19,14 @@ def _banks_of(bank: Bank) -> list[Bank]:
     padrao = getattr(known, "DEFAULT_BANKS", []) if known else []
     if not padrao:
         return [bank]
+    if bank.default is not None:
+        padrao = [b for b in padrao
+                  if b["name"].upper().endswith(bank.default.upper())]
+        if not padrao:
+            nomes = ", ".join(b["name"] for b
+                              in getattr(known, "DEFAULT_BANKS", []))
+            raise SystemExit(f"{bank.driver} has no default bank "
+                             f"{bank.default!r}; it has: {nomes}")
     return [replace(bank,
                     name=b.get("name", bank.name),
                     faders={int(k): _destination(v)

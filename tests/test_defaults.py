@@ -91,3 +91,29 @@ def test_the_bridge_runs_against_the_expanded_profile(monkeypatch, tmp_path):
     except KeyboardInterrupt:
         pass
     assert [b.name for b in seen["p"].banks] == ["HD 8 IN", "HD 8 OUT"]
+
+
+def test_a_bank_can_ask_for_one_of_the_device_s_defaults():
+    p = _expand({"banks": [{"driver": "hd8", "default": "IN"}]})
+    assert [b.name for b in p.banks] == ["HD 8 IN"]
+    assert p.banks[0].faders[1].target == "line/ch1/volume"
+
+
+def test_the_three_shapes_live_side_by_side():
+    """A rig's own bank, then the device's whole input side, then its output
+    side -- what João asked for (2026-09-22)."""
+    raw = {"banks": [
+        {"name": "RIG", "driver": "hd8",
+         "faders": {1: {"driver": "hd8", "target": "global/mainOutVolume"}}},
+        {"driver": "hd8", "default": "IN"},
+        {"driver": "hd8", "default": "OUT"},
+    ]}
+    p = _expand(raw)
+    assert [b.name for b in p.banks] == ["RIG", "HD 8 IN", "HD 8 OUT"]
+
+
+def test_a_default_that_does_not_exist_is_refused_by_name():
+    import pytest
+    with pytest.raises(SystemExit) as e:
+        _expand({"banks": [{"driver": "hd8", "default": "MIDDLE"}]})
+    assert "MIDDLE" in str(e.value) and "IN" in str(e.value)
