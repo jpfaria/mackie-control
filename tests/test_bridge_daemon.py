@@ -119,6 +119,15 @@ def test_bank_buttons(bridge):
     b.on_midi(mido.Message("note_on", note=mackie.ARROW_LEFT, velocity=127))
     assert b.bank.name == "rig"
     b.on_midi(mido.Message("note_on", note=mackie.SELECT + 1, velocity=127))
+    assert b.bank.name == "rig"          # square does nothing without select: bank
+
+
+def test_square_jumps_to_a_bank_only_when_the_profile_asks():
+    com_select = {"banks": [dict(PROFILE["banks"][0], buttons={"select": "bank"}),
+                            PROFILE["banks"][1]]}
+    b = daemon.Bridge(profile.parse_profile(com_select),
+                      drivers={"fake": FakeDriver()}, log=lambda *a: None)
+    b.on_midi(mido.Message("note_on", note=mackie.SELECT + 1, velocity=127))
     assert b.bank.name == "mac"
 
 

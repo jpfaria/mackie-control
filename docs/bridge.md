@@ -35,9 +35,11 @@ banks:
   other inputs and leaves the outputs alone.
 - A fader **without** `mute:` is silenced by zeroing its own value, which is
   remembered and handed back — the HD 8 has no mute for its headphone outputs.
-- `rec: scene` makes R n load the n-th scene of that fader's driver;
-  `select: bank` makes the square button n pick bank n. Channel ◀/▶ and the
-  arrows page through banks.
+- **Banks always page with Channel ◀/▶ and with the arrows ◀/▶.** That is the
+  default and needs no configuration.
+- `rec: scene` makes R n load the n-th scene of that fader's driver.
+- `select: bank` is optional: it makes the square button n jump straight to bank
+  n. Left out (the default), the square buttons do nothing.
 
 ## Takeover
 

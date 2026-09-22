@@ -8,7 +8,8 @@
               mute: line/ch1/mute}
         buttons:
           rec: scene        # R n loads scene n of that fader's driver
-          select: bank      # the square button n selects bank n
+          select: bank      # optional: the square button n jumps straight to bank n
+                            # (banks always page with Channel / arrows)
         transport:          # the buttons along the bottom edge
           play: {driver: app, target: Spotify, command: playpause}
           forward: {driver: app, target: Spotify, command: next track}

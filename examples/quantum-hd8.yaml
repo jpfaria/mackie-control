@@ -25,11 +25,9 @@ banks:
       8: {driver: hd8, target: line/ch20/volume, label: GUITAR 4, group: in, mute: line/ch20/mute}
     buttons:
       rec: scene      # R n loads the n-th scene stored in the interface
-      select: bank    # the square button n selects bank n
+      # banks page with Channel < / > and the arrows -- no button to configure
 
   - name: Mac
     faders:
       1: {driver: mac, label: System volume}
       2: {driver: app, target: Spotify, label: Spotify}
-    buttons:
-      select: bank

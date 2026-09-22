@@ -223,7 +223,7 @@ class Bridge:
             self.solo(b.channel + 1)
         elif b.kind == "rec" and actions.get("rec", "scene") == "scene":
             self.scene(b.channel + 1)
-        elif b.kind == "select" and actions.get("select", "bank") == "bank":
+        elif b.kind == "select" and actions.get("select") == "bank":
             self.select_bank(b.channel)
         elif b.kind in self.bank.transport:
             self.run_command(self.bank.transport[b.kind], b.kind)
