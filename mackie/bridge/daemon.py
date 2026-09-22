@@ -83,7 +83,14 @@ class Bridge:
             self.send(**mackie.led(mackie.MUTE + fader - 1, self._is_muted(fader)))
             self.send(**mackie.led(mackie.SOLO + fader - 1, self.soloed == fader))
             self.send(**mackie.led(mackie.REC + fader - 1, self.scene_loaded == fader))
-            self.send(**mackie.led(mackie.SELECT + fader - 1, self.bank_index == fader - 1))
+            # The square button only gets a LED when the profile gave it a job.
+            # Banks page with the arrows and there can be any number of them, so
+            # eight lamps cannot stand for "the active bank".
+            if self.bank.buttons.get("select") == "bank":
+                self.send(**mackie.led(mackie.SELECT + fader - 1,
+                                       self.bank_index == fader - 1))
+            else:
+                self.send(**mackie.led(mackie.SELECT + fader - 1, False))
 
     def _is_muted(self, fader):
         dest = self.destination(fader)

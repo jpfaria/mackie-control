@@ -181,6 +181,18 @@ def test_push_state_sends_positions_and_leds(bridge):
     b.push_state()
     assert any(k["type"] == "pitchwheel" for k in sent)
     select = [k for k in sent if k["type"] == "note_on" and k["note"] == mackie.SELECT]
+    assert select and select[0]["velocity"] == mackie.OFF   # no job, no lamp
+
+
+def test_the_square_lamp_only_lights_when_it_selects_banks():
+    com_select = {"banks": [dict(PROFILE["banks"][0], buttons={"select": "bank"}),
+                            PROFILE["banks"][1]]}
+    b = daemon.Bridge(profile.parse_profile(com_select),
+                      drivers={"fake": FakeDriver()}, log=lambda *a: None)
+    sent = []
+    b.send = lambda **k: sent.append(k)
+    b.push_state()
+    select = [k for k in sent if k["type"] == "note_on" and k["note"] == mackie.SELECT]
     assert select and select[0]["velocity"] == mackie.ON
 
 
