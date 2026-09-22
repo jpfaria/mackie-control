@@ -146,7 +146,9 @@ asking a closed app about its player would launch it.
 
 Asking costs a round trip (117 ms to Spotify through AppleScript, measured
 2026-09-22), so it happens once a second on the drain thread, never on the MIDI
-one. A driver says what it knows by implementing `playing(target)`: `True`,
+one — and **once per player, not per button**: four buttons bound to Spotify
+used to mean eight AppleScript calls a second, which is a second of work per
+second, and the faders waited behind it. A driver says what it knows by implementing `playing(target)`: `True`,
 `False`, or `None` for "nothing to ask".
 
 ## Losing the surface and getting it back

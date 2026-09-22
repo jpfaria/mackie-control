@@ -214,14 +214,21 @@ class Bridge:
         the drain thread, never on the MIDI one."""
         ligado = dict(self.bank.transport)
         ligado.update(self.profile.globals.transport)
+        # One ask per player, not per button: four buttons bound to Spotify
+        # meant four round trips a second and left the drain thread no time to
+        # write faders (2026-09-22).
+        sabido = {}
         for kind, cmd in ligado.items():
             note = getattr(mackie, kind.upper(), None)
             if note is None:
                 continue
-            try:
-                tocando = self.driver(cmd.driver).playing(cmd.target)
-            except Exception:
-                tocando = None
+            chave = (cmd.driver, cmd.target)
+            if chave not in sabido:
+                try:
+                    sabido[chave] = self.driver(cmd.driver).playing(cmd.target)
+                except Exception:
+                    sabido[chave] = None
+            tocando = sabido[chave]
             # Lit while the app is there at all: a bound button that does
             # nothing because the app is closed should not look available.
             self.send(**mackie.led(note, tocando is not None))

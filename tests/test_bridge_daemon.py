@@ -782,3 +782,24 @@ def test_nothing_is_sent_to_lamps_the_surface_does_not_have(rig):
     mudas = {mackie.ARROW_UP, mackie.ARROW_DOWN, mackie.ARROW_LEFT,
              mackie.ARROW_RIGHT, mackie.BANK_LEFT, mackie.BANK_RIGHT}
     assert not [k for k in sent if k.get("note") in mudas]
+
+
+def test_the_player_is_asked_once_per_target_not_once_per_button():
+    """Four buttons bound to Spotify used to mean four round trips a second,
+    each two AppleScript calls: the drain thread had no time left to write
+    faders (2026-09-22)."""
+    perguntas = []
+
+    class Contada(Player):
+        def playing(self, target):
+            perguntas.append(target)
+            return True
+
+    quatro = {"banks": [{"name": "rig", "faders": {}}],
+              "global": {"transport": {
+                  k: {"driver": "fake", "target": "Spotify", "command": k}
+                  for k in ("play", "stop", "forward", "rewind")}}}
+    b = daemon.Bridge(profile.parse_profile(quatro), drivers={"fake": Contada()},
+                      send=lambda **k: None, log=lambda *a: None)
+    b.push_transport()
+    assert perguntas == ["Spotify"]

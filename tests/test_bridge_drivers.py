@@ -131,16 +131,23 @@ def test_hd8_closes_the_dead_client_before_reconnecting():
 def test_app_reports_nothing_when_the_app_is_not_open(monkeypatch):
     """A closed app must not be asked about its player: AppleScript would
     launch it (2026-09-22)."""
-    monkeypatch.setattr(mac, "_osascript", lambda s: "false")
+    monkeypatch.setattr(mac, "_osascript", lambda s: "closed")
     assert mac.AppVolume().playing("Spotify") is None
 
 
 def test_app_reports_whether_it_is_playing(monkeypatch):
-    respostas = {"running": "true", "state": "playing"}
-    monkeypatch.setattr(mac, "_osascript",
-                        lambda s: respostas["running"] if "is running" in s
-                        else respostas["state"])
+    resposta = {"v": "playing"}
+    monkeypatch.setattr(mac, "_osascript", lambda s: resposta["v"])
     d = mac.AppVolume()
     assert d.playing("Spotify") is True
-    respostas["state"] = "paused"
+    resposta["v"] = "paused"
     assert d.playing("Spotify") is False
+
+
+def test_app_asks_the_player_in_a_single_call(monkeypatch):
+    """Two calls cost 234 ms beside the fader writes; one costs 117."""
+    chamadas = []
+    monkeypatch.setattr(mac, "_osascript",
+                        lambda s: chamadas.append(s) or "playing")
+    mac.AppVolume().playing("Spotify")
+    assert len(chamadas) == 1 and "is running" in chamadas[0]

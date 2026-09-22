@@ -64,13 +64,16 @@ class AppVolume(Driver):
     def playing(self, target):
         """None while the app is closed -- asking a closed app about its
         player would launch it, which is not what a lamp is worth."""
+        # One AppleScript, not two: each call costs about 117 ms, and this
+        # runs beside the fader writes (measured 2026-09-22).
+        script = (f'if application "{target}" is running then\n'
+                  f'  tell application "{target}" to return player state as text\n'
+                  f'else\n  return "closed"\nend if')
         try:
-            if _osascript(f'application "{target}" is running').strip() != "true":
-                return None
-            estado = _osascript(f'tell application "{target}" to player state')
+            estado = _osascript(script).strip()
         except subprocess.CalledProcessError:
             return None
-        return estado.strip() == "playing"
+        return None if estado == "closed" else estado == "playing"
 
     def command(self, target, name):
         """Any AppleScript command the app understands: playpause, pause,
