@@ -4,9 +4,12 @@ In DAW mode it speaks Mackie Control (`mackie.protocol`); User/CC mode is set on
 the device itself with Shift + the two bottom-right buttons. It has no motor
 and no internal preset: what a fader "is" comes from whoever it is bridged to.
 
-Measured 2026-09-21: over Bluetooth CoreMIDI shows `SMC-Mixer-Master` (and a
-`-Private` twin); the Mackie Device Query gets no position report back, so a
-host cannot ask where the faders are -- hence soft takeover in the bridge.
+Measured 2026-09-21: CoreMIDI shows `SMC-Mixer-Master` (and a `-Private` twin);
+the Mackie Device Query gets no position report back, so a host cannot ask where
+the faders are -- hence soft takeover in the bridge.
+
+Measured 2026-09-22: paired over BLE instead, the only port is `SMC-Mixer
+Bluetooth` -- no -Master at all. Hence two hints, tried in order.
 """
 from __future__ import annotations
 
@@ -16,7 +19,7 @@ from dataclasses import dataclass
 @dataclass(frozen=True)
 class Surface:
     name: str
-    port_hint: str
+    port_hints: tuple[str, ...]
     faders: int
     encoders: int
     channel_buttons: tuple[str, ...]
@@ -25,7 +28,7 @@ class Surface:
 
 SURFACE = Surface(
     name="SMC-Mixer",
-    port_hint="SMC-Mixer-Master",
+    port_hints=("SMC-Mixer-Master", "SMC-Mixer"),
     faders=8,
     encoders=8,
     channel_buttons=("mute", "solo", "rec", "select"),

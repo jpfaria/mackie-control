@@ -4,7 +4,7 @@ from mackie import surfaces
 def test_default_surface_is_the_smc_mixer():
     s = surfaces.get()
     assert s.name == "SMC-Mixer" and s.faders == 8 and s.encoders == 8
-    assert s.port_hint == "SMC-Mixer-Master"
+    assert s.port_hints == ("SMC-Mixer-Master", "SMC-Mixer")
 
 
 def test_name_is_normalised():
