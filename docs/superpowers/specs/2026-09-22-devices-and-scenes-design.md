@@ -1,6 +1,7 @@
 # Devices and scenes on the surface — design
 
-**Status:** draft, awaiting João's review (2026-09-22)
+**Status:** implemented 2026-09-22 (commit `56c4c74`), except the skill,
+which is being written under `superpowers:writing-skills`.
 
 ## The problem
 
