@@ -43,7 +43,12 @@ answer buries the one line that mattered (2026-09-22: "seja simples na
 resposta, nao vou ler um texto do tamanho de um livro").
 
 ## A bank is one subject
-One fader per thing, and never two faders for the L and R of the same pair —
-the HD 8 links them. Eight faders of mixed subjects on one screen is what makes
-a profile unreadable: outputs in one bank, guitars in another, the computer in
-a third. Paging is a keypress.
+Outputs in one bank, guitars in another, the computer in a third. Eight faders
+of mixed subjects on one screen is what makes a profile unreadable, and paging
+is a keypress.
+
+**L and R are two faders when the gear has two parameters.** Do not decide for
+the user that a pair should be linked (2026-09-22: "eu quero poder controlar L
+e R separadamente"). On the HD 8, measured the same day: MAIN and both
+headphone outs have a single volume parameter each, so they cannot be split;
+every aux send is its own channel (`aux/ch1`…`aux/ch14`), so those can.
