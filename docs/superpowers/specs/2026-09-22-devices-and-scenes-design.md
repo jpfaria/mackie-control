@@ -35,16 +35,16 @@ of eight, one for the column.
 
 | Lamps | Says |
 |---|---|
-| row under the knobs (`10`-`17`) | the row of eight — the page |
-| square row | column, when the **device** is what changed |
-| R row | column, when the **scene** is what changed |
+| lamp under the knob (pitch bend) | the row of eight — the page |
+| R row | column, when the **device** is what changed |
+| S row | column, when the **scene** is what changed |
 
 **Only the one that just changed is shown** (João, 2026-09-22): the R row is
 shared, so it cannot carry two numbers at once. Pressing ▲/▼ shows the device,
 pressing ◀/▶ shows the scene, and the display stays as it is until something
 changes again.
 
-Device 12 is `knob-row 2` + `square 4`. Scene 5 is `knob-row 1` + `R 5`.
+Device 12 is `knob 2` + `R 4`. Scene 5 is `knob 1` + `S 5`.
 
 This replaces the three blinks of the bank number, which said less and only
 right after a change.

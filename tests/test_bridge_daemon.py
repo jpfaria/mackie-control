@@ -314,8 +314,9 @@ def test_bank_change_blinks_row_and_column_three_times():
     b.send = lambda **k: sent.append(k)
     b.bank_index = 11                       # linha 1, coluna 3
     b.flash_bank(sleep=lambda s: None)
-    assert _acesos(sent, mackie.MUTE) == [1] * daemon.BLINKS
-    assert _acesos(sent, mackie.SELECT) == [3] * daemon.BLINKS
+    # a linha e' a lampada do knob, que so acende por pitch bend
+    assert [k["channel"] for k in sent if k["type"] == "pitchwheel"][0] == 1
+    assert _acesos(sent, mackie.REC) == [3] * daemon.BLINKS
 
 
 def test_the_blink_touches_only_its_own_cell():
@@ -325,8 +326,8 @@ def test_the_blink_touches_only_its_own_cell():
     b.send = lambda **k: sent.append(k)
     b.bank_index = 11
     b.flash_bank(sleep=lambda s: None)
-    fase_do_blink = sent[:daemon.BLINKS * 2 * 2]      # on+off, duas notas cada
-    assert {k["note"] for k in fase_do_blink} == {mackie.MUTE + 1, mackie.SELECT + 3}
+    blink = [k for k in sent if k["type"] == "note_on"][:daemon.BLINKS * 2]
+    assert {k["note"] for k in blink} == {mackie.REC + 3}   # so a sua coluna
 
 
 def test_beyond_64_banks_there_is_nothing_to_flash():
@@ -577,18 +578,18 @@ def test_changing_device_shows_it_under_the_knobs_and_on_the_square():
     sent = []
     b.send = lambda **k: sent.append(k)
     b.bank_index = 11                       # row 1, column 3
-    b.flash_number(b.bank_index, mackie.SELECT, sleep=lambda s: None)
-    assert _acesos(sent, mackie.MUTE) == [1] * daemon.BLINKS
-    assert _acesos(sent, mackie.SELECT) == [3] * daemon.BLINKS
+    b.flash_number(b.bank_index, mackie.REC, sleep=lambda s: None)
+    assert [k["channel"] for k in sent if k["type"] == "pitchwheel"][0] == 1
+    assert _acesos(sent, mackie.REC) == [3] * daemon.BLINKS
 
 
 def test_changing_scene_shows_it_under_the_knobs_and_on_the_r_row(rig):
     b, _ = rig
     sent = []
     b.send = lambda **k: sent.append(k)
-    b.flash_number(9, mackie.REC, sleep=lambda s: None)    # row 1, column 1
-    assert _acesos(sent, mackie.MUTE) == [1] * daemon.BLINKS
-    assert _acesos(sent, mackie.REC) == [1] * daemon.BLINKS
+    b.flash_number(9, mackie.SOLO, sleep=lambda s: None)   # row 1, column 1
+    assert [k["channel"] for k in sent if k["type"] == "pitchwheel"][0] == 1
+    assert _acesos(sent, mackie.SOLO) == [1] * daemon.BLINKS
 
 
 def test_the_r_button_and_the_arrows_page_the_same_list():
@@ -605,3 +606,16 @@ def test_the_r_button_and_the_arrows_page_the_same_list():
     b.scene(2)
     assert fake.loaded == "ONE"
     assert b.scene_index == 1             # the arrows now carry on from here
+
+
+def test_the_knob_lamp_is_handed_back_so_it_stops_blinking(rig):
+    """The knob lamp is the fader-position lamp: a pitch bend sets it blinking
+    and it only stops when the fader matches. So the flash ends by sending the
+    position that channel was last seen at (measured 2026-09-22)."""
+    b, _ = rig
+    b.last_seen[(0, 1)] = 0.25
+    sent = []
+    b.send = lambda **k: sent.append(k)
+    b.flash_number(9, mackie.SOLO, sleep=lambda s: None)
+    bends = [k for k in sent if k["type"] == "pitchwheel" and k["channel"] == 1]
+    assert bends[-1] == mackie.fader_position(1, 0.25)

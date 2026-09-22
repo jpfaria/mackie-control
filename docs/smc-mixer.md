@@ -28,12 +28,16 @@ The four buttons beside each fader, top to bottom as they sit on the
 device: **M is the one under the knob**, then S, R and the square
 (measured 2026-09-22 by pressing them in order: `10`, `08`, `00`, `18`).
 
-**There are 32 lamps and no more** (measured 2026-09-22 by lighting each row in
-turn and asking João what came on): notes `00`-`07` light the eight R, `08`-`0F`
-the S, `10`-`17` the M, `18`-`1F` the square. The knob has no lamp of its own:
-CC `30`-`37` (the Mackie V-Pot ring) and notes `20`-`27` light nothing at all.
-Four rows of eight is the whole vocabulary a bridge has for saying where the
-rig is.
+**The lamps** (measured 2026-09-22, one at a time, asking João which lit):
+notes `00`-`07` are the R row, `08`-`0F` the S, `10`-`17` the M, `18`-`1F` the
+square. **The lamp under each knob is the fader-position lamp** — no note or CC
+reaches it, only a **Pitch Bend** on that channel, and it then *blinks* until
+the physical fader matches. CC `30`-`37` (the Mackie V-Pot ring) and notes
+`20`-`27` do nothing; notes `50`-`5F` light the transport.
+
+So the lamp a player reads first cannot be held steady: showing a row on it
+means blinking that channel, and handing the channel back its last known
+position is what stops the blink.
 
 Every LED is lit by sending the same note back with velocity 127 (0 clears it).
 Sending a Pitch Bend makes that channel's LED **blink until the physical fader

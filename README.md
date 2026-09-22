@@ -95,9 +95,9 @@ A different rig is a different file. Nothing about a rig goes into the code.
 | `takeover` | `false` waives the takeover for that destination |
 
 ◀ / ▶ pages the current device's scenes and loads each on the press. Neither
-arrow pair wraps. The row of lamps under the knobs shows which row of
-eight you are on; the square row is the device's column and the R row the
-scene's — only whatever just changed.
+arrow pair wraps. The lamp under the knob shows which row of eight you
+are on; **R** is the device's column and **S** the scene's — only whatever just
+changed.
 
 Faders jump to a position, so they wait for **takeover**: a fader starts writing
 only once it crosses the value already in the gear. Encoders are endless knobs —
@@ -124,4 +124,4 @@ they nudge, so they need none of that.
 python3 -m pytest -q
 ```
 
-93 tests, no hardware: drivers and surfaces go in by injection.
+94 tests, no hardware: drivers and surfaces go in by injection.
