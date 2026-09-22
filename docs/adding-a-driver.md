@@ -16,6 +16,7 @@ A driver also declares **which buttons it knows what to do with**:
 ```python
 class HD8(Driver):
     BUTTONS = {"rec": "scene"}                    # R n loads the n-th scene
+                                                  # of the bank's scene list
 
 class AppVolume(Driver):
     BUTTONS = {"play": "playpause", "stop": "pause",
