@@ -765,43 +765,20 @@ def test_every_bound_transport_button_lights_while_the_app_is_open():
     assert [k["velocity"] for k in sent if k["note"] == mackie.PLAY] == [mackie.ON]
 
 
-def test_the_arrows_light_only_where_there_is_somewhere_to_go(rig):
-    """Three devices, so at the first one the up arrow is dark and the down
-    arrow lit. Neither pair wraps, so a dark arrow means "this is the end"."""
+
+
+
+
+
+
+def test_nothing_is_sent_to_lamps_the_surface_does_not_have(rig):
+    """Measured 2026-09-22, with the bridge stopped: notes 60-63 (the four
+    arrows) and 2E/2F (Channel) light nothing on the SMC-Mixer. Sending to
+    them is noise on the wire and a lie in the docs."""
     b, _ = rig
     sent = []
     b.send = lambda **k: sent.append(k)
     b.push_state()
-    acesos = {k["note"]: k["velocity"] for k in sent}
-    assert acesos[mackie.ARROW_UP] == mackie.OFF
-    assert acesos[mackie.ARROW_DOWN] == mackie.ON
-    sent.clear()
-    b.step_bank(+1)
-    b.step_bank(+1)                       # last device
-    sent.clear()
-    b.push_state()
-    acesos = {k["note"]: k["velocity"] for k in sent}
-    assert acesos[mackie.ARROW_UP] == mackie.ON
-    assert acesos[mackie.ARROW_DOWN] == mackie.OFF
-
-
-def test_the_scene_arrows_are_dark_on_a_device_with_no_scenes():
-    b = daemon.Bridge(profile.parse_profile({"banks": [{"name": "x", "faders": {}}]}),
-                      log=lambda *a: None)
-    sent = []
-    b.send = lambda **k: sent.append(k)
-    b.push_state()
-    acesos = {k["note"]: k["velocity"] for k in sent}
-    assert acesos[mackie.ARROW_LEFT] == mackie.OFF
-    assert acesos[mackie.ARROW_RIGHT] == mackie.OFF
-
-
-def test_channel_left_and_right_light_like_the_vertical_arrows(rig):
-    """Channel ◀/▶ pages devices too, so it says the same thing."""
-    b, _ = rig
-    sent = []
-    b.send = lambda **k: sent.append(k)
-    b.push_state()
-    acesos = {k["note"]: k["velocity"] for k in sent}
-    assert acesos[mackie.BANK_LEFT] == mackie.OFF     # first device
-    assert acesos[mackie.BANK_RIGHT] == mackie.ON
+    mudas = {mackie.ARROW_UP, mackie.ARROW_DOWN, mackie.ARROW_LEFT,
+             mackie.ARROW_RIGHT, mackie.BANK_LEFT, mackie.BANK_RIGHT}
+    assert not [k for k in sent if k.get("note") in mudas]

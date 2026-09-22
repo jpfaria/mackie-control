@@ -125,4 +125,4 @@ they nudge, so they need none of that.
 python3 -m pytest -q
 ```
 
-118 tests, no hardware: drivers and surfaces go in by injection.
+116 tests, no hardware: drivers and surfaces go in by injection.

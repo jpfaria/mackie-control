@@ -137,14 +137,6 @@ the gear switched off:
 2  Mac      (mac)   2 faders   no scenes
 ```
 
-## The lamps that say what will work
-
-**The four arrows light only where there is somewhere to go**: ▲/▼ at the ends
-of the device list, ◀/▶ at the ends of the scene list, and both dark on a
-device with no scenes. Channel ◀/▶ pages devices too, so it says the same as
-▲/▼. Neither pair wraps, so a dark arrow is the end and a lit
-one is an invitation.
-
 ## Transport lamps
 
 A transport button lights while the app it is bound to is **open**, and goes

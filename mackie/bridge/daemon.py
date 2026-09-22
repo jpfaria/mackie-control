@@ -180,23 +180,8 @@ class Bridge:
             self.send(**mackie.fader_position(row, home))
         self.push_state()                 # real LEDs come back
 
-    def push_arrows(self):
-        """The four arrows light only where there is somewhere to go. Neither
-        pair wraps, so a dark arrow is the end of the list -- and a lit one is
-        an invitation, which is what João asked the surface to show."""
-        ultimo = len(self.profile.banks) - 1
-        cenas = len(self.scene_names())
-        atual = -1 if self.scene_index is None else self.scene_index
-        for nota in (mackie.ARROW_UP, mackie.BANK_LEFT):
-            self.send(**mackie.led(nota, self.bank_index > 0))
-        for nota in (mackie.ARROW_DOWN, mackie.BANK_RIGHT):
-            self.send(**mackie.led(nota, self.bank_index < ultimo))
-        self.send(**mackie.led(mackie.ARROW_LEFT, cenas > 0 and atual > 0))
-        self.send(**mackie.led(mackie.ARROW_RIGHT, cenas > 0 and atual < cenas - 1))
-
     def push_state(self):
         """Everything the surface can show: fader positions and LEDs."""
-        self.push_arrows()
         for fader in range(1, 9):
             dest = self.destination(fader)
             # The value is read only when it is going to be sent: a read costs
