@@ -18,7 +18,7 @@ class _Real:                             # pragma: no cover - needs the pedal
         self._dev = MVave(devices.get("mk300"), None)
 
     def volume(self):
-        return self._dev.read_preset().volume()
+        return self._dev.read_preset().volume
 
     def set_volume(self, v):
         self._dev.set_u16(self._mk.OFF_VOL, v)
@@ -40,6 +40,12 @@ class MK300(Pedal):
                         "label": "MK-300 VOL", "group": "out"}}},
     ]
 
+    def __init__(self, connect=None):
+        super().__init__(connect)
+        # Reading the 160 names takes a second on the pedal (measured
+        # 2026-09-22): read them once, not on every arrow press.
+        self._names = None
+
     def _real(self):                     # pragma: no cover - needs the pedal
         return _Real()
 
@@ -51,7 +57,9 @@ class MK300(Pedal):
         self._use(lambda c: c.set_volume(v))
 
     def scenes(self):
-        return self._use(lambda c: list(c.preset_names()))
+        if self._names is None:
+            self._names = [n.strip() for n in self._use(lambda c: list(c.preset_names()))]
+        return self._names
 
     def load_scene(self, index):
         names = self.scenes()

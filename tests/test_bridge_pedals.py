@@ -115,3 +115,21 @@ def test_both_pedals_are_known_and_ship_a_bank():
     for nome in ("mk300", "ampero2"):
         assert nome in known
         assert known[nome].DEFAULT_BANKS
+
+
+def test_mk300_reads_the_preset_names_once():
+    """Reading the 160 names takes a second on the real pedal (measured
+    2026-09-22); doing it on every arrow press would stall the surface."""
+    fake = FakeMK300()
+    pedidos = []
+    original = fake.preset_names
+    fake.preset_names = lambda: pedidos.append(1) or original()
+    d = mk300.MK300(connect=lambda: fake)
+    d.scenes(); d.scenes(); d.load_scene(1)
+    assert len(pedidos) == 1
+
+
+def test_mk300_names_lose_their_padding():
+    fake = FakeMK300()
+    fake.preset_names = lambda: ["UK Clean ", "UK OD "]
+    assert mk300.MK300(connect=lambda: fake).scenes() == ["UK Clean", "UK OD"]
