@@ -7,6 +7,7 @@ import sys
 import mido
 
 from . import protocol, surfaces
+from .bridge.run import find_port
 
 
 def cmd_bridge(a):
@@ -34,10 +35,7 @@ def cmd_ports(a):
 def cmd_watch(a):
     """Print what the surface sends, decoded -- how every mapping here was found."""
     surface = surfaces.get(a.surface)
-    port = a.port or next((n for n in mido.get_input_names()
-                            if surface.port_hint in n), None)
-    if port is None:
-        raise SystemExit(f"no port matching {surface.port_hint!r}; see `mackie ports`")
+    port = a.port or find_port(surface.port_hints, mido.get_input_names())
     print(f"listening on {port} for {a.seconds}s (Ctrl-C to stop)")
     import time
     end = time.time() + a.seconds

@@ -120,3 +120,15 @@ def test_run_waits_instead_of_giving_up_when_the_surface_is_not_there(monkeypatc
         run.run("ignored.yaml", midi=midi, log=lambda *a: None, watch=0,
                 sleep=lambda s: midi.tick())
     assert [p.name for p in midi.opened] == ["SINCO SMC-Mixer-Master"] * 2
+
+
+def test_the_cli_finds_the_surface_the_same_way_the_bridge_does():
+    """`mackie watch` had its own copy of the port lookup and went on calling
+    surface.port_hint after the surface grew several hints (2026-09-22)."""
+    import inspect
+
+    from mackie import cli, surfaces
+
+    assert "find_port" in inspect.getsource(cli.cmd_watch)
+    assert run.find_port(surfaces.get().port_hints,
+                         ["SMC-Mixer Bluetooth"]) == "SMC-Mixer Bluetooth"
