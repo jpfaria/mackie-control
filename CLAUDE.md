@@ -34,3 +34,16 @@ data. No test in this repo may require a device to be plugged in.
 ## Language
 Code, comments, docs and log messages are in **English**. João reads Portuguese
 in chat, not in a public repo.
+
+## Answers are short
+Four lines is the ceiling for an answer in chat; a decision question is one
+line of fact plus one line per option. Findings, measurements and reasoning go
+into `docs/`, never into the reply. João stops reading long answers, so a long
+answer buries the one line that mattered (2026-09-22: "seja simples na
+resposta, nao vou ler um texto do tamanho de um livro").
+
+## A bank is one subject
+One fader per thing, and never two faders for the L and R of the same pair —
+the HD 8 links them. Eight faders of mixed subjects on one screen is what makes
+a profile unreadable: outputs in one bank, guitars in another, the computer in
+a third. Paging is a keypress.
