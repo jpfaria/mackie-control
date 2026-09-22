@@ -803,3 +803,25 @@ def test_the_player_is_asked_once_per_target_not_once_per_button():
                       send=lambda **k: None, log=lambda *a: None)
     b.push_transport()
     assert perguntas == ["Spotify"]
+
+
+def test_pressing_past_the_first_scene_does_not_reload_it(rig):
+    """At the end of the list the arrow does nothing. Reloading the same scene
+    is not harmless: on a pedal it throws away every unsaved tweak (seen on the
+    Ampero 2026-09-22: three presses of left at scene 1, three reloads)."""
+    b, fake = rig
+    _press(b, "arrow_right")                 # scene 1
+    carregadas = []
+    orig = fake.load_scene
+    fake.load_scene = lambda i: carregadas.append(i) or orig(i)
+    _press(b, "arrow_left")
+    _press(b, "arrow_left")
+    assert carregadas == []
+
+
+def test_pressing_past_the_last_device_does_not_reselect_it(rig):
+    b, _ = rig
+    linhas = []
+    b.log = linhas.append
+    _press(b, "arrow_up")                    # already on the first
+    assert not any("bank" in l for l in linhas)

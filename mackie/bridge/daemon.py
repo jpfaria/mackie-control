@@ -78,8 +78,9 @@ class Bridge:
     def step_bank(self, step):
         """Stop at the ends instead of wrapping: one press too many must not
         put the rig in a device the user was walking away from."""
-        self.select_bank(min(len(self.profile.banks) - 1,
-                             max(0, self.bank_index + step)))
+        alvo = min(len(self.profile.banks) - 1, max(0, self.bank_index + step))
+        if alvo != self.bank_index:          # at the end, a press does nothing
+            self.select_bank(alvo)
 
     # -- scenes ----------------------------------------------------------------
     def scene_names(self):
@@ -104,6 +105,10 @@ class Bridge:
             return
         start = 0 if self.scene_index is None else self.scene_index + step
         i = min(len(names) - 1, max(0, start))
+        # At the end of the list the arrow does nothing: reloading the same
+        # scene throws away every unsaved tweak on a pedal (2026-09-22).
+        if i == self.scene_index:
+            return
         if self.load_scene_at(i):
             self.flash_number(i, mackie.SOLO)
 
