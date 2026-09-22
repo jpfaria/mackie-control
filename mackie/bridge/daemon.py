@@ -158,11 +158,13 @@ class Bridge:
         row, column = divmod(n, 8)
         if row > 7:                       # beyond 64 there is nothing to show
             return
-        # The row is only shown when there is a value to hand the channel back
-        # afterwards: without one the knob would blink for ever, which is worse
-        # than showing no row at all.
-        dest = self.destination(row + 1)
-        home = self._read(dest) if dest else None
+        # The surface compares what it is sent against **where the physical
+        # fader is**, so the only value that stops the blink is the last
+        # position that fader itself reported. The gear's own value does not
+        # stop it: measured 2026-09-22, the knob blinked on and on. With no
+        # report yet for that channel the row is not shown at all -- a knob
+        # blinking for ever is worse than no number.
+        home = self.last_seen.get((self.bank_index, row))
         if home is not None:
             self.send(**mackie.fader_position(row, 0.0))
         for _ in range(BLINKS):

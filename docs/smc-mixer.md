@@ -36,8 +36,9 @@ the physical fader matches. CC `30`-`37` (the Mackie V-Pot ring) and notes
 `20`-`27` do nothing; notes `50`-`5F` light the transport.
 
 So the lamp a player reads first cannot be held steady: showing a row on it
-means blinking that channel, and handing the channel back its last known
-position is what stops the blink.
+means blinking that channel, and the only value that stops the blink is the
+position that fader itself last sent. Sending what the *gear* holds does not
+stop it — the comparison is against the physical fader, not against the rig.
 
 Every LED is lit by sending the same note back with velocity 127 (0 clears it).
 Sending a Pitch Bend makes that channel's LED **blink until the physical fader

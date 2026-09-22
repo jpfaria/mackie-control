@@ -582,7 +582,7 @@ def test_changing_device_shows_it_under_the_knobs_and_on_the_square():
 
 def test_changing_scene_shows_it_under_the_knobs_and_on_the_s_row(bridge):
     b, fake = bridge
-    fake.values["phones"] = 0.4             # fader 2 = row 1, and readable
+    b.last_seen[(0, 1)] = 0.4               # fader 2 = row 1, position known
     sent = []
     b.send = lambda **k: sent.append(k)
     b.flash_number(9, mackie.SOLO, sleep=lambda s: None)   # row 1, column 1
@@ -609,19 +609,19 @@ def test_the_r_button_and_the_arrows_page_the_same_list():
     assert b.scene_index == 1             # the arrows now carry on from here
 
 
-def test_the_knob_lamp_is_handed_back_the_value_in_the_gear(bridge):
-    """The knob lamp is the fader-position lamp: a pitch bend sets it blinking
-    and it only stops when the fader matches. So the flash ends by sending the
-    value the gear actually holds -- then it blinks only while the physical
-    fader really is out of place, which is the warning the surface exists to
-    give."""
+def test_the_knob_lamp_is_handed_back_where_the_fader_really_is(bridge):
+    """The surface compares against the physical fader, so only the position
+    that fader itself reported stops the blink. Sending the gear's value left
+    it blinking for ever (measured 2026-09-22)."""
     b, fake = bridge
-    fake.values["phones"] = 0.4              # fader 2 -> row 1
+    b.last_seen[(0, 1)] = 0.4                # where fader 2 physically sits
+    fake.values["phones"] = 0.9              # the gear disagrees; irrelevant
     sent = []
     b.send = lambda **k: sent.append(k)
     b.flash_number(9, mackie.SOLO, sleep=lambda s: None)
     bends = [k for k in sent if k["type"] == "pitchwheel" and k["channel"] == 1]
-    assert bends[-1] == mackie.fader_position(1, 0.4)
+    assert bends[0] == mackie.fader_position(1, 0.0)    # acende a linha
+    assert bends[1] == mackie.fader_position(1, 0.4)    # e devolve o fader
 
 
 def test_a_row_with_nothing_to_read_is_left_dark_instead_of_blinking():
