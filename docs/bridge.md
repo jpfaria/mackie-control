@@ -137,12 +137,19 @@ the gear switched off:
 2  Mac      (mac)   2 faders   no scenes
 ```
 
+## The lamps that say what will work
+
+**The four arrows light only where there is somewhere to go**: ▲/▼ at the ends
+of the device list, ◀/▶ at the ends of the scene list, and both dark on a
+device with no scenes. Neither pair wraps, so a dark arrow is the end and a lit
+one is an invitation.
+
 ## Transport lamps
 
-The play button lights while its player is playing and goes dark when it
-pauses. While the app is **closed** the lamp stays dark and the app is not
-asked again — asking a closed app about its player would launch it, and a lamp
-lit for an app that is not running says nothing true.
+A transport button lights while the app it is bound to is **open**, and goes
+dark when it is closed: a button that does nothing because Spotify is not
+running should not look available. The app is not asked again once closed —
+asking a closed app about its player would launch it.
 
 Asking costs a round trip (117 ms to Spotify through AppleScript, measured
 2026-09-22), so it happens once a second on the drain thread, never on the MIDI

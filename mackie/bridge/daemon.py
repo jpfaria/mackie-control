@@ -180,8 +180,21 @@ class Bridge:
             self.send(**mackie.fader_position(row, home))
         self.push_state()                 # real LEDs come back
 
+    def push_arrows(self):
+        """The four arrows light only where there is somewhere to go. Neither
+        pair wraps, so a dark arrow is the end of the list -- and a lit one is
+        an invitation, which is what João asked the surface to show."""
+        ultimo = len(self.profile.banks) - 1
+        cenas = len(self.scene_names())
+        atual = -1 if self.scene_index is None else self.scene_index
+        self.send(**mackie.led(mackie.ARROW_UP, self.bank_index > 0))
+        self.send(**mackie.led(mackie.ARROW_DOWN, self.bank_index < ultimo))
+        self.send(**mackie.led(mackie.ARROW_LEFT, cenas > 0 and atual > 0))
+        self.send(**mackie.led(mackie.ARROW_RIGHT, cenas > 0 and atual < cenas - 1))
+
     def push_state(self):
         """Everything the surface can show: fader positions and LEDs."""
+        self.push_arrows()
         for fader in range(1, 9):
             dest = self.destination(fader)
             # The value is read only when it is going to be sent: a read costs
@@ -222,7 +235,9 @@ class Bridge:
                 tocando = self.driver(cmd.driver).playing(cmd.target)
             except Exception:
                 tocando = None
-            self.send(**mackie.led(note, bool(tocando) and kind == "play"))
+            # Lit while the app is there at all: a bound button that does
+            # nothing because the app is closed should not look available.
+            self.send(**mackie.led(note, tocando is not None))
 
     def _is_muted(self, fader):
         dest = self.destination(fader)

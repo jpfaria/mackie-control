@@ -734,14 +734,14 @@ def test_the_play_lamp_is_dark_while_the_app_is_closed():
     assert [k["velocity"] for k in sent if k["note"] == mackie.PLAY] == [mackie.OFF]
 
 
-def test_the_play_lamp_lights_while_it_plays():
+def test_the_play_lamp_goes_dark_when_the_app_is_closed():
     b, p = _com_player()
     p.state = True
     sent = []
     b.send = lambda **k: sent.append(k)
     b.push_transport()
     assert [k["velocity"] for k in sent if k["note"] == mackie.PLAY] == [mackie.ON]
-    p.state = False
+    p.state = None                        # fechou o app
     sent.clear()
     b.push_transport()
     assert [k["velocity"] for k in sent if k["note"] == mackie.PLAY] == [mackie.OFF]
@@ -754,3 +754,43 @@ def test_the_player_is_asked_only_when_something_is_bound_to_it(bridge):
     b.send = lambda **k: sent.append(k)
     b.push_transport()
     assert not sent
+
+
+def test_every_bound_transport_button_lights_while_the_app_is_open():
+    b, p = _com_player()
+    p.state = False                       # open, paused
+    sent = []
+    b.send = lambda **k: sent.append(k)
+    b.push_transport()
+    assert [k["velocity"] for k in sent if k["note"] == mackie.PLAY] == [mackie.ON]
+
+
+def test_the_arrows_light_only_where_there_is_somewhere_to_go(rig):
+    """Three devices, so at the first one the up arrow is dark and the down
+    arrow lit. Neither pair wraps, so a dark arrow means "this is the end"."""
+    b, _ = rig
+    sent = []
+    b.send = lambda **k: sent.append(k)
+    b.push_state()
+    acesos = {k["note"]: k["velocity"] for k in sent}
+    assert acesos[mackie.ARROW_UP] == mackie.OFF
+    assert acesos[mackie.ARROW_DOWN] == mackie.ON
+    sent.clear()
+    b.step_bank(+1)
+    b.step_bank(+1)                       # last device
+    sent.clear()
+    b.push_state()
+    acesos = {k["note"]: k["velocity"] for k in sent}
+    assert acesos[mackie.ARROW_UP] == mackie.ON
+    assert acesos[mackie.ARROW_DOWN] == mackie.OFF
+
+
+def test_the_scene_arrows_are_dark_on_a_device_with_no_scenes():
+    b = daemon.Bridge(profile.parse_profile({"banks": [{"name": "x", "faders": {}}]}),
+                      log=lambda *a: None)
+    sent = []
+    b.send = lambda **k: sent.append(k)
+    b.push_state()
+    acesos = {k["note"]: k["velocity"] for k in sent}
+    assert acesos[mackie.ARROW_LEFT] == mackie.OFF
+    assert acesos[mackie.ARROW_RIGHT] == mackie.OFF
