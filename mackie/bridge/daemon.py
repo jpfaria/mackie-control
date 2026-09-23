@@ -21,8 +21,9 @@ TRANSPORT_EVERY = 1.0    # s between asks of "is it playing?"
 
 
 class Bridge:
-    def __init__(self, profile, send=None, drivers=None, log=print):
+    def __init__(self, profile, send=None, drivers=None, log=print, state=None):
         self.profile = profile
+        self.state = state
         self.send = send or (lambda **kwargs: None)
         self.log = log
         self._drivers = drivers if drivers is not None else {}
@@ -93,6 +94,28 @@ class Bridge:
     @scene_index.setter
     def scene_index(self, value):
         self._scene_of[self.bank_index] = value
+        self._remember()
+
+    def _remember(self):
+        if self.state is None:
+            return
+        nomes = [b.name for b in self.profile.banks]
+        self.state.save(nomes[self.bank_index],
+                        {nomes[i]: s for i, s in self._scene_of.items()
+                         if s is not None and i < len(nomes)})
+
+    def restore(self):
+        """Go back to the device and scene positions of the last run. Loads
+        nothing: it only sets where the arrows start from."""
+        if self.state is None:
+            return
+        dados = self.state.load()
+        nomes = [b.name for b in self.profile.banks]
+        for nome, cena in (dados.get("scenes") or {}).items():
+            if nome in nomes and isinstance(cena, int):
+                self._scene_of[nomes.index(nome)] = cena
+        if dados.get("device") in nomes:
+            self.bank_index = nomes.index(dados["device"])
 
     def scene_names(self):
         """Which scenes this device offers, in order: the profile's list when
@@ -164,6 +187,7 @@ class Bridge:
     def select_bank(self, i):
         if 0 <= i < len(self.profile.banks):
             self.bank_index = i
+            self._remember()
             self.took_over.clear()
             self.log(f"** bank {i + 1}/{len(self.profile.banks)}: {self.bank.name}")
             self.push_state()

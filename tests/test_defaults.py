@@ -85,6 +85,9 @@ def test_the_bridge_runs_against_the_expanded_profile(monkeypatch, tmp_path):
         def select_bank(self, i):
             pass
 
+        def restore(self):
+            pass
+
     monkeypatch.setattr(run, "Bridge", FakeBridge)
     try:
         run.run(str(yaml_file), midi=FakeMidi(), log=lambda *a: None, sleep=lambda s: None)

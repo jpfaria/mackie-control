@@ -141,4 +141,4 @@ borrowed state back — and lives in [`skills/configuring-devices`](skills/confi
 python3 -m pytest -q
 ```
 
-126 tests, no hardware: drivers and surfaces go in by injection.
+139 tests, no hardware: drivers and surfaces go in by injection.

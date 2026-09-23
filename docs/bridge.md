@@ -159,6 +159,19 @@ used to mean eight AppleScript calls a second, which is a second of work per
 second, and the faders waited behind it. A driver says what it knows by implementing `playing(target)`: `True`,
 `False`, or `None` for "nothing to ask".
 
+## Remembering where the rig was
+
+The bridge is restarted all the time, and the HD 8 cannot say which scene it
+has loaded. So it keeps, per profile, the device on screen and the scene each
+device was on, in `~/.local/state/mackie-control/<profile>.json` (or under
+`$XDG_STATE_HOME`) — never beside the profile, which lives in a git repo.
+
+On start it goes back to that device and uses those scenes as the starting
+point of the arrows. **It loads nothing**: remembering where the rig was must
+not change the rig. A pedal that can say which scene it has loaded wins over
+the file. Scenes are kept by bank name, so adding a bank to the YAML does not
+hand one device's scene to another. A missing or broken file is a fresh start.
+
 ## Losing the surface and getting it back
 
 Switching the surface off takes its port out of CoreMIDI **without any error

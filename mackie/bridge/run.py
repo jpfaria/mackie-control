@@ -16,6 +16,7 @@ from ..surfaces import get as get_surface
 from .daemon import Bridge
 from .defaults import expand
 from .profile import load_profile
+from .state import State, default_path
 
 POLL = 0.005        # s between reads of the surface
 WATCH = 1.0         # s between checks that the surface is still there
@@ -52,7 +53,8 @@ def run(profile_path: str, port: str | None = None, log=print,
     live = {"out": None}
     bridge = Bridge(profile,
                     send=lambda **k: live["out"] and live["out"].send(midi.Message(**k)),
-                    log=log)
+                    log=log, state=State(default_path(profile_path)))
+    bridge.restore()
     threading.Thread(target=bridge.drain_forever, daemon=True).start()
 
     first = True

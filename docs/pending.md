@@ -19,5 +19,5 @@ heard it.
   preset or patch is loaded, and the bridge now starts from it. Not yet
   measured on the pedals: the first try hit the MK-300 unplugged and the
   Ampero port already held by the running bridge ("input overrun"). The HD 8
-  cannot say at all — no scene parameter in its state — so there the first
-  arrow still starts from the first scene.
+  cannot say at all — no scene parameter in its state — so there the arrows
+  start from the scene the bridge itself last loaded, kept across restarts.
