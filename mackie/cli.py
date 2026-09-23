@@ -68,6 +68,19 @@ def cmd_devices(a):
         print(line)
 
 
+def cmd_service(a):
+    """Keep the bridge running at login and after any exit (a LaunchAgent)."""
+    from . import service
+    if a.action == "install":
+        if not a.profile:
+            raise SystemExit("service install needs PROFILE.yaml")
+        service.install(a.profile)
+    elif a.action == "uninstall":
+        service.uninstall()
+    else:
+        print(service.status())
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="mackie", description=__doc__)
     sub = ap.add_subparsers(dest="cmd")
@@ -91,6 +104,11 @@ def main(argv=None):
     s.add_argument("seconds", type=int, nargs="?", default=30)
     s.add_argument("--surface"); s.add_argument("--port")
     s.set_defaults(fn=cmd_watch)
+
+    s = sub.add_parser("service", help="run the bridge at login and restart it if it exits (macOS)")
+    s.add_argument("action", choices=["install", "uninstall", "status"])
+    s.add_argument("profile", nargs="?")
+    s.set_defaults(fn=cmd_service)
 
     a = ap.parse_args(argv)
     if not a.cmd:
