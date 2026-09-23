@@ -49,3 +49,9 @@ def test_status(tmp_path):
     dest.write_text("x")
     assert service.status(run=Launchctl(stdout="\tpid = 42\n"), home=tmp_path) == "running (pid = 42)"
     assert service.status(run=Launchctl(returncode=113), home=tmp_path) == "installed, not loaded"
+
+
+def test_restart_kicks_the_running_agent():
+    run = Launchctl()
+    service.restart(run=run, log=lambda *_: None)
+    assert run.calls[0][:3] == ["launchctl", "kickstart", "-k"]

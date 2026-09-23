@@ -77,6 +77,8 @@ def cmd_service(a):
         service.install(a.profile)
     elif a.action == "uninstall":
         service.uninstall()
+    elif a.action == "restart":
+        service.restart()
     else:
         print(service.status())
 
@@ -106,7 +108,7 @@ def main(argv=None):
     s.set_defaults(fn=cmd_watch)
 
     s = sub.add_parser("service", help="run the bridge at login and restart it if it exits (macOS)")
-    s.add_argument("action", choices=["install", "uninstall", "status"])
+    s.add_argument("action", choices=["install", "uninstall", "restart", "status"])
     s.add_argument("profile", nargs="?")
     s.set_defaults(fn=cmd_service)
 

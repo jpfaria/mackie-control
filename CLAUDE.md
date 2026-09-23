@@ -58,3 +58,12 @@ That last fact came from reading `quantum-hd8/docs/` **after** telling João his
 FRFR fader was moving one side of a pair, which was wrong: `aux/ch9` is the ADAT
 9/10 bus, a different destination. The rig's own repos answer these questions —
 read them before making a claim about his rig, not after.
+
+## After every push, update João's machine and restart the service
+The bridge runs as a LaunchAgent (`mackie service install PROFILE`), not in a
+terminal. A pushed change is not live until it is installed and the service
+restarted, so every push here is followed by:
+`~/.pyenv/versions/3.12.3/bin/pip install -q --force-reinstall --no-deps git+https://github.com/jpfaria/mackie-control && ~/.pyenv/versions/3.12.3/bin/mackie service restart`,
+then `mackie service status` and a look at `~/Library/Logs/mackie-control.log`.
+(2026-09-23: "qdo a gente alterar alguma coisa aqui, vc precisa atualizar a
+app na minha maquina e reiniciar o servico".)

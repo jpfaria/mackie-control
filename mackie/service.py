@@ -74,6 +74,12 @@ def uninstall(run=subprocess.run, home: Path | None = None, log=print) -> None:
     log(f"removed {dest}")
 
 
+def restart(run=subprocess.run, log=print) -> None:
+    """Pick up a freshly installed version: kill and start again at once."""
+    run(["launchctl", "kickstart", "-k", f"{_domain()}/{LABEL}"], check=True)
+    log("restarted")
+
+
 def status(run=subprocess.run, home: Path | None = None) -> str:
     if not agent_path(home).exists():
         return "not installed"
