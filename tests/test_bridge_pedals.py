@@ -133,3 +133,15 @@ def test_mk300_names_lose_their_padding():
     fake = FakeMK300()
     fake.preset_names = lambda: ["UK Clean ", "UK OD "]
     assert mk300.MK300(connect=lambda: fake).scenes() == ["UK Clean", "UK OD"]
+
+
+def test_mk300_says_which_preset_is_loaded():
+    fake = FakeMK300()
+    fake.current = lambda: 2
+    assert mk300.MK300(connect=lambda: fake).current_scene() == 2
+
+
+def test_ampero_says_which_patch_is_loaded():
+    fake = FakeAmpero()
+    fake.current = lambda: 1
+    assert ampero2.Ampero2(connect=lambda: fake).current_scene() == 1

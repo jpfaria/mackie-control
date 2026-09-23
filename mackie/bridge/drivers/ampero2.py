@@ -29,6 +29,12 @@ class _Real:                             # pragma: no cover - needs the pedal
         from ampero2.protocol import msg_load_patch
         self._dev.send(msg_load_patch(i))
 
+    def current(self):
+        import struct
+        from ampero2.protocol import reply_body
+        from ampero2.protocol import msg_query_global
+        return struct.unpack("<I", reply_body(self._dev.request(msg_query_global(9))))[0]
+
 
 class Ampero2(Pedal):
     name = "ampero2"
@@ -60,6 +66,9 @@ class Ampero2(Pedal):
         if self._names is None:
             self._names = self._use(lambda c: list(c.patch_names()))
         return self._names
+
+    def current_scene(self):
+        return self._use(lambda c: c.current())
 
     def load_scene(self, index):
         names = self.scenes()

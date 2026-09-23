@@ -31,7 +31,7 @@ class Bridge:
         self.muted_before = {}      # mute state before a solo, per fader
         self.value_before = {}      # value of targets silenced without a mute
         self.scene_loaded = None    # fader whose scene was loaded last
-        self.scene_index = None     # position in the device's scene list
+        self._scene_of = {}         # device (bank) -> position in its scene list
         self.took_over = set()      # (bank, channel) already in control
         self.last_seen = {}         # last position seen per fader
         self.pending = {}
@@ -83,6 +83,17 @@ class Bridge:
             self.select_bank(alvo)
 
     # -- scenes ----------------------------------------------------------------
+    @property
+    def scene_index(self):
+        """Where the current device is in its scene list. Kept per device:
+        one shared position made the HD 8 think it was on the Ampero's scene
+        7 (2026-09-22)."""
+        return self._scene_of.get(self.bank_index)
+
+    @scene_index.setter
+    def scene_index(self, value):
+        self._scene_of[self.bank_index] = value
+
     def scene_names(self):
         """Which scenes this device offers, in order: the profile's list when
         it has one, otherwise whatever the device itself reports."""
@@ -103,6 +114,8 @@ class Bridge:
         names = self.scene_names()
         if not names:
             return
+        if self.scene_index is None:
+            self.scene_index = self._scene_on_device(names)
         start = 0 if self.scene_index is None else self.scene_index + step
         i = min(len(names) - 1, max(0, start))
         # At the end of the list the arrow does nothing: reloading the same
@@ -111,6 +124,23 @@ class Bridge:
             return
         if self.load_scene_at(i):
             self.flash_number(i, mackie.SOLO)
+
+    def _scene_on_device(self, names):
+        """Where the device itself is, as a position in `names` -- or None
+        when it cannot say. A scene picked on the device must be the starting
+        point of the next arrow, not overwritten by the first scene."""
+        name = self.bank.driver or self.bank_driver()
+        if name is None:
+            return None
+        try:
+            drv = self.driver(name)
+            i = drv.current_scene()
+            todas = list(drv.scenes())
+        except Exception:
+            return None
+        if i is None or not 0 <= i < len(todas):
+            return None
+        return names.index(todas[i]) if todas[i] in names else None
 
     def load_scene_at(self, i):
         names = self.scene_names()

@@ -825,3 +825,26 @@ def test_pressing_past_the_last_device_does_not_reselect_it(rig):
     b.log = linhas.append
     _press(b, "arrow_up")                    # already on the first
     assert not any("bank" in l for l in linhas)
+
+
+def test_each_device_remembers_its_own_scene(rig):
+    """Scene 2 on the first device must not make the next device think it is
+    on scene 2 too: the position is per device (2026-09-22)."""
+    b, fake = rig
+    _press(b, "arrow_right")
+    _press(b, "arrow_right")                 # device 1, scene 2
+    _press(b, "arrow_down")                  # device 2
+    assert b.scene_index is None
+    _press(b, "arrow_up")                    # back to device 1
+    assert b.scene_index == 1
+
+
+def test_the_first_arrow_starts_from_the_scene_the_device_is_on(rig):
+    """With the scene loaded on the device itself (its own footswitch, its own
+    editor), the first arrow press must go one step from there -- not load the
+    first scene over it (2026-09-22: ELEMENT loaded over the scene João had
+    just picked)."""
+    b, fake = rig
+    fake.current_scene = lambda: 0           # the device is on ONE
+    _press(b, "arrow_right")
+    assert fake.loaded == "TWO"

@@ -52,6 +52,11 @@ class Driver:
     def scenes(self):
         return []
 
+    def current_scene(self):
+        """The index of the scene the device has loaded right now, or None
+        when it cannot say -- the HD 8 cannot (measured 2026-09-22)."""
+        return None
+
     def load_scene(self, index):
         raise Unsupported(f"{self.name}: scenes")
 

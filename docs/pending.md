@@ -14,3 +14,10 @@ heard it.
   SMC-Mixer. The drivers only look for the USB name today (`USB Composite
   Device`, `Ampero II Stage MIDI`). Measure each pedal's BLE port name, and
   whether its SysEx survives BLE at all, before adding it.
+- **Starting the arrows from the device's own scene, on the hardware.** The
+  MK-300 (`current_preset_index`) and the Ampero (global page 9) can say which
+  preset or patch is loaded, and the bridge now starts from it. Not yet
+  measured on the pedals: the first try hit the MK-300 unplugged and the
+  Ampero port already held by the running bridge ("input overrun"). The HD 8
+  cannot say at all — no scene parameter in its state — so there the first
+  arrow still starts from the first scene.

@@ -29,6 +29,9 @@ class _Real:                             # pragma: no cover - needs the pedal
     def load_preset(self, i):
         self._dev.load_preset(i)
 
+    def current(self):
+        return self._dev.current_preset_index()
+
 
 class MK300(Pedal):
     name = "mk300"
@@ -60,6 +63,9 @@ class MK300(Pedal):
         if self._names is None:
             self._names = [n.strip() for n in self._use(lambda c: list(c.preset_names()))]
         return self._names
+
+    def current_scene(self):
+        return self._use(lambda c: c.current())
 
     def load_scene(self, index):
         names = self.scenes()
