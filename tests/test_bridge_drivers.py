@@ -151,3 +151,48 @@ def test_app_asks_the_player_in_a_single_call(monkeypatch):
                         lambda s: chamadas.append(s) or "playing")
     mac.AppVolume().playing("Spotify")
     assert len(chamadas) == 1 and "is running" in chamadas[0]
+
+
+class WriteNotConfirmed(Exception):
+    """Same name as quantum_hd8's: the driver must not need the library to
+    recognise it."""
+
+
+class StaleClient(FakeClient):
+    """A session the daemon stopped confirming: reads answer, every write
+    times out -- the bridge after hours running, while a fresh connection
+    writes fine (measured 2026-09-23 and 2026-09-27)."""
+
+    def set_raw(self, path, v):
+        raise WriteNotConfirmed(f"{path}: not confirmed")
+
+    def set(self, path, v):
+        raise WriteNotConfirmed(f"{path}: not confirmed")
+
+
+def test_hd8_reconnects_when_a_stale_session_stops_confirming():
+    fresh = FakeClient()
+    d = hd8.HD8(client=StaleClient(), connect=lambda: fresh)
+    d.write("global/mainOutVolume", 0.25)
+    assert fresh.values["global/mainOutVolume"] == 0.25
+
+
+def test_hd8_does_not_reconnect_again_and_again_for_a_refused_write():
+    """A write the mixer genuinely refuses (an aux bus in Mixer Bypass) must
+    not reconnect on every fader message."""
+    tries = []
+
+    def connect():
+        tries.append(1)
+        return StaleClient()
+
+    clock = [100.0]
+    d = hd8.HD8(client=StaleClient(), connect=connect, clock=lambda: clock[0])
+    for _ in range(3):
+        with pytest.raises(drivers.Unsupported):
+            d.write("aux/ch10/volume", 0.5)
+    assert len(tries) == 1
+    clock[0] += hd8.STALE_RETRY + 1
+    with pytest.raises(drivers.Unsupported):
+        d.write("aux/ch10/volume", 0.5)
+    assert len(tries) == 2

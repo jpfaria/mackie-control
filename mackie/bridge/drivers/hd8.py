@@ -7,10 +7,27 @@ Every write here goes to `ucdaemon` over TCP instead.
 That TCP session does not survive the interface being switched off: afterwards
 every write raises `OSError: Bad file descriptor` while reads keep answering
 from a stale cache, so the bridge looks alive and moves nothing (measured
-2026-09-22). The driver therefore reconnects once per operation and retries."""
+2026-09-22). The driver therefore reconnects once per operation and retries.
+
+A session can also go stale with the socket still open: after hours running,
+the daemon stops confirming the bridge's writes while a fresh connection
+writes fine (measured 2026-09-23 and 2026-09-27). An unconfirmed write is
+therefore also retried on a new connection -- but at most once every
+STALE_RETRY seconds, because the mixer also leaves genuinely refused writes
+unconfirmed (an aux bus in Mixer Bypass) and a fader sends dozens a second."""
 from __future__ import annotations
 
+import time
+
 from . import Driver, Unsupported
+
+STALE_RETRY = 10.0   # s between reconnects caused by unconfirmed writes
+
+
+def _unconfirmed(e):
+    """quantum_hd8's WriteNotConfirmed, recognised by name so this module
+    does not need the library to be importable."""
+    return type(e).__name__ == "WriteNotConfirmed"
 
 
 def _connect():
@@ -51,11 +68,13 @@ class HD8(Driver):
                 for k in range(1, 6)}}},
     ]
 
-    def __init__(self, client=None, connect=None):
+    def __init__(self, client=None, connect=None, clock=time.monotonic):
         # A client passed without a way to rebuild it (the tests) cannot be
         # reconnected: the driver then refuses instead of crashing.
         self._connect = connect or (None if client is not None else _connect)
         self.cli = client if client is not None else self._connect()
+        self._clock = clock
+        self._stale_at = None         # when the last stale reconnect happened
 
     def _retry(self, operation):
         """Run an operation, and if the socket is gone, reconnect once and run
@@ -64,10 +83,22 @@ class HD8(Driver):
             return operation(self.cli)
         except OSError as e:
             self.cli = self._reconnect(e)
-            try:
-                return operation(self.cli)
-            except OSError as again:
+        except Exception as e:
+            if not _unconfirmed(e):
+                raise
+            now = self._clock()
+            if self._stale_at is not None and now - self._stale_at < STALE_RETRY:
+                raise Unsupported(f"hd8: {e}") from e
+            self._stale_at = now
+            self.cli = self._reconnect(e)
+        try:
+            return operation(self.cli)
+        except OSError as again:
+            raise Unsupported(f"hd8: {again}") from again
+        except Exception as again:
+            if _unconfirmed(again):
                 raise Unsupported(f"hd8: {again}") from again
+            raise
 
     def _reconnect(self, cause):
         if self._connect is None:
