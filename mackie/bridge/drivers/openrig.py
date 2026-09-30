@@ -11,6 +11,11 @@ streamable HTTP. A POST of `initialize` answers `text/event-stream` with a
 request before `initialize` is refused with 422. Answers come as SSE `data:`
 lines holding the JSON-RPC response.
 
+The strips change with every project and chain opened, so the driver's banks
+are live: `OpenRig OUT` and `OpenRig IN` take their faders from
+`openrig://mixer` while the bridge runs, in the order OpenRig lists them, and
+address each strip by its id. Nothing about them is written in a profile.
+
 Targets name a strip the way `openrig://mixer` lists it: the full id
 (`out:24,25@coreaudio:...`), the full name, or the start of the name
 ("FRFR" matches "FRFR (ADAT out 11/12)"). A name that matches more than one
@@ -104,6 +109,9 @@ class Http:
 class OpenRig(Driver):
     name = "openrig"
 
+    DEFAULT_BANKS = [{"name": "OpenRig OUT", "live": "output"},
+                     {"name": "OpenRig IN", "live": "input"}]
+
     def __init__(self, client=None):
         self.cli = client if client is not None else Http()
         self._ready = client is not None
@@ -138,6 +146,16 @@ class OpenRig(Driver):
             raise Unsupported(f"openrig: no mixer strip called {target!r}")
         raise Unsupported(f"openrig: {target!r} matches "
                           + ", ".join(repr(s["name"]) for s in found))
+
+    def live_faders(self, which):
+        """The first eight strips of one direction ("output" / "input"), as
+        OpenRig lists them now."""
+        strips = self._retry(lambda c: c.resource("openrig://mixer")["strips"])
+        mine = [s for s in strips if s.get("direction") == which][:8]
+        group = "in" if which == "input" else "out"
+        return {n: {"target": s["id"], "label": s["name"], "group": group,
+                    "mute": "mute:" + s["id"]}
+                for n, s in enumerate(mine, start=1)}
 
     def read(self, target):
         if target.startswith("mute:"):

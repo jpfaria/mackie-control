@@ -8,9 +8,11 @@ from __future__ import annotations
 
 import threading
 import time
+from dataclasses import replace
 
 from .. import protocol as mackie
 from .drivers import Unsupported, build
+from .profile import _destination
 
 INTERVAL = 0.03      # s: a fader sends ~40 messages/s, so write only the last
 NEAR = 0.02          # takeover tolerance, in 0..1
@@ -37,6 +39,8 @@ class Bridge:
         self.last_seen = {}         # last position seen per fader
         self.pending = {}
         self.nudges = {}            # encoder detents waiting for the next drain
+        self._live = {}             # bank index -> faders a live bank has now
+        self._live_due = True       # ask the live bank's driver on the next drain
         self.lock = threading.Lock()
 
     # -- drivers ---------------------------------------------------------------
@@ -69,7 +73,38 @@ class Bridge:
     # -- state -----------------------------------------------------------------
     @property
     def bank(self):
-        return self.profile.bank(self.bank_index)
+        bank = self.profile.bank(self.bank_index)
+        if bank.live:
+            return replace(bank, faders=self._live.get(self.bank_index, {}))
+        return bank
+
+    def refresh_live(self):
+        """Ask a live bank's driver which faders it has now. OpenRig's strips
+        change with every project and chain opened, so they cannot be written
+        in a profile; this runs on the drain thread, once a second and right
+        after a bank change, never on the MIDI one."""
+        self._live_due = False
+        i = self.bank_index
+        base = self.profile.bank(i)
+        if not base.live:
+            return
+        name = base.driver
+        try:
+            raw = self.driver(name).live_faders(base.live)
+            faders = {int(n): _destination({"driver": name, **d})
+                      for n, d in raw.items() if 1 <= int(n) <= 8}
+        except Exception as e:
+            faders = {}
+            if self._live.get(i) != {} or i not in self._live:
+                self.log(f"  !! {base.name}: {e}")
+        if faders == self._live.get(i):
+            return
+        self._live[i] = faders
+        self.took_over = {k for k in self.took_over if k[0] != i}
+        self.log(f"  .. {base.name}: " + (", ".join(
+            f"{n} {d.label}" for n, d in sorted(faders.items())) or "no faders"))
+        if i == self.bank_index:
+            self.push_state()
 
     def destination(self, fader):
         """A global fader wins over the bank's: it is the one that is always
@@ -187,6 +222,7 @@ class Bridge:
     def select_bank(self, i):
         if 0 <= i < len(self.profile.banks):
             self.bank_index = i
+            self._live_due = True
             self._remember()
             self.took_over.clear()
             self.log(f"** bank {i + 1}/{len(self.profile.banks)}: {self.bank.name}")
@@ -361,12 +397,21 @@ class Bridge:
             time.sleep(INTERVAL)
             self.drain()
             desde += INTERVAL
+            if self._live_due:
+                self._refresh_live_safely()
             if desde >= TRANSPORT_EVERY:
                 desde = 0.0
+                self._refresh_live_safely()
                 try:
                     self.push_transport()
                 except Exception as e:                  # pragma: no cover
                     self.log(f"  !! transport: {e}")
+
+    def _refresh_live_safely(self):
+        try:
+            self.refresh_live()
+        except Exception as e:                          # pragma: no cover
+            self.log(f"  !! live bank: {e}")
 
     def drain(self):
         with self.lock:

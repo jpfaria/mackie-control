@@ -133,3 +133,29 @@ def test_mute_target_reads_the_mute_the_lamp_needs():
     assert d.read("mute:FRFR") == 1.0
     assert d.toggle("mute:FRFR") is False
     assert d.read("mute:FRFR") == 0.0
+
+
+def test_live_faders_follow_the_strips_openrig_has_now():
+    mcp = FakeMcp()
+    for s in mcp.strips:
+        s["direction"] = "output"
+    mcp.strips.append({"id": "in:0@hd8", "name": "GUITARRA 1", "gain_db": 0.0,
+                       "muted": False, "direction": "input"})
+    d = openrig.OpenRig(client=mcp)
+    out = d.live_faders("output")
+    assert [f["label"] for f in out.values()][:2] == ["FRFR (ADAT out 11/12)", "SYN-5050 (Out 5/6)"]
+    assert out[1] == {"target": "out:24,25@hd8", "label": "FRFR (ADAT out 11/12)",
+                      "group": "out", "mute": "mute:out:24,25@hd8"}
+    assert d.live_faders("input") == {1: {"target": "in:0@hd8", "label": "GUITARRA 1",
+                                          "group": "in", "mute": "mute:in:0@hd8"}}
+    mcp.strips = mcp.strips[1:2]                 # another project opened
+    assert list(d.live_faders("output")) == [1]
+    assert d.live_faders("output")[1]["target"] == "out:4,5@hd8"
+
+
+def test_openrig_banks_are_live_and_expand_from_a_bare_bank():
+    from mackie.bridge.defaults import expand
+    from mackie.bridge.profile import parse_profile
+    p = expand(parse_profile({"banks": [{"driver": "openrig"}]}))
+    assert [(b.name, b.live, b.faders) for b in p.banks] == [
+        ("OpenRig OUT", "output", {}), ("OpenRig IN", "input", {})]

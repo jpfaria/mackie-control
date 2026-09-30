@@ -29,6 +29,7 @@ def _banks_of(bank: Bank) -> list[Bank]:
                              f"{bank.default!r}; it has: {nomes}")
     return [replace(bank,
                     name=b.get("name", bank.name),
+                    live=b.get("live"),
                     faders={int(k): _destination(v)
                             for k, v in (b.get("faders") or {}).items()})
             for b in padrao]

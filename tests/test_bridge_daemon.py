@@ -848,3 +848,46 @@ def test_the_first_arrow_starts_from_the_scene_the_device_is_on(rig):
     fake.current_scene = lambda: 0           # the device is on ONE
     _press(b, "arrow_right")
     assert fake.loaded == "TWO"
+
+
+class LiveDriver(FakeDriver):
+    """Gear whose channels change with what is loaded, like OpenRig."""
+    name = "live"
+
+    def __init__(self):
+        super().__init__()
+        self.strips = ["main", "phones"]
+
+    def live_faders(self, which):
+        return {n: {"target": t, "label": t.upper()}
+                for n, t in enumerate(self.strips, start=1)}
+
+
+def test_a_live_bank_takes_its_faders_from_the_driver_while_running():
+    drv = LiveDriver()
+    p = profile.parse_profile({"banks": [{"name": "live", "driver": "live",
+                                          "live": "output"}]})
+    b = daemon.Bridge(p, drivers={"live": drv}, log=lambda *_: None)
+    assert b.bank.faders == {}                   # nothing until the driver is asked
+    b.refresh_live()
+    assert [d.target for d in b.bank.faders.values()] == ["main", "phones"]
+    b.fader(1, drv.values["phones"])
+    b.drain()
+    drv.strips = ["g1"]                          # another project opened
+    b.refresh_live()
+    assert {n: d.target for n, d in b.bank.faders.items()} == {1: "g1"}
+    assert (0, 1) not in b.took_over             # takeover starts over
+
+
+def test_a_live_bank_whose_driver_is_down_has_no_faders_and_no_crash():
+    class Down(LiveDriver):
+        def live_faders(self, which):
+            raise Unsupported("openrig: not reachable")
+    logged = []
+    p = profile.parse_profile({"banks": [{"name": "live", "driver": "live",
+                                          "live": "output"}]})
+    b = daemon.Bridge(p, drivers={"live": Down()}, log=logged.append)
+    b.refresh_live()
+    b.refresh_live()
+    assert b.bank.faders == {}
+    assert len([m for m in logged if "not reachable" in m]) == 1

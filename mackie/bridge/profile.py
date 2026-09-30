@@ -77,6 +77,10 @@ class Bank:
     # Which of the driver's own banks this one is ("IN", "OUT", ...). Left out
     # on a bank with no faders, every one of them is used.
     default: str | None = None
+    # A bank whose faders the driver hands over while the bridge runs, because
+    # the gear's channels change with what is loaded: the value is passed to
+    # the driver's live_faders().
+    live: str | None = None
     faders: dict[int, Destination] = field(default_factory=dict)
     encoders: dict[int, Destination] = field(default_factory=dict)
     buttons: dict[str, str] = field(default_factory=dict)
@@ -149,6 +153,7 @@ def parse_profile(data: dict) -> Profile:
                     driver=b.get("driver"),
                     scenes=list(b.get("scenes") or []),
                     default=b.get("default"),
+                    live=b.get("live"),
                     faders={int(k): _destination(v) for k, v in (b.get("faders") or {}).items()},
                     encoders={int(k): _destination(v)
                               for k, v in (b.get("encoders") or {}).items()},

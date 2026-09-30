@@ -28,3 +28,14 @@ read 17–26 ms, read + write 49 ms.
 gRPC would be the natural transport, but OpenRig's `adapter-server` crate is
 still a placeholder; the wire code is isolated in the `Http` class so it can
 be swapped when gRPC exists.
+
+## The banks are live (2026-09-30)
+
+OpenRig's mixer strips change with every project and chain opened, so a
+profile that names them goes stale the moment another project is loaded. The
+driver's default banks, `OpenRig OUT` and `OpenRig IN`, carry `live: output` /
+`live: input` instead of faders: the bridge asks `live_faders()` on the drain
+thread right after the bank is selected and once a second after that, maps the
+first eight strips of that direction in OpenRig's order, and addresses each
+strip by its id. When the list changes, takeover starts over for that bank. A
+profile only writes `- {driver: openrig}`.

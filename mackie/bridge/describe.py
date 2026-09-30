@@ -34,5 +34,5 @@ def describe(profile, drivers=None) -> list[str]:
         shown = ("scenes: " + "  ".join(f"{n} {s}" for n, s in enumerate(scenes, start=1))
                  if scenes else "no scenes")
         lines.append(f"{i}  {bank.name:<8} ({driver})   "
-                     f"{len(bank.faders)} faders   {shown}")
+                     f"{'live' if bank.live else len(bank.faders)} faders   {shown}")
     return lines + unreachable

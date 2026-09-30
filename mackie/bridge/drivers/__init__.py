@@ -31,6 +31,13 @@ class Driver:
     # driver. A profile that writes its own faders is never touched.
     DEFAULT_BANKS: list[dict] = []
 
+    def live_faders(self, which):
+        """The faders of a bank the device decides while it runs, as
+        {fader: destination dict} -- for gear whose channels change with what
+        is loaded (an OpenRig project). A default bank with `live: which`
+        asks this instead of listing faders."""
+        raise Unsupported(f"{self.name}: live faders")
+
     def read(self, target):
         raise Unsupported(f"{self.name}: read {target}")
 
