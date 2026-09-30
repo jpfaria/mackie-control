@@ -61,6 +61,12 @@ matches** — the fader has no motor.
   why the bridge uses soft takeover: a fader only starts writing once it
   crosses the current value, otherwise touching it would jump the volume.
 - Shift blinking on its own is the **low-battery** warning (manual).
+- The battery level is **not readable from the Mac** (2026-09-27): over BLE the
+  SMC-Mixer reports only its address (`system_profiler SPBluetoothDataType`,
+  `ioreg` have no percentage). Shift blinking is the only battery signal.
+- The BLE port can **drop out of CoreMIDI on its own** and only come back after
+  power-cycling the surface (seen 2026-09-27, Shift not blinking, so not the
+  battery; cause unknown). The bridge reopens it by itself once it is back.
 - The configuration app (MidiSuite) is Windows-only, and as of 21/09 the
   official download page lists only NAM A2, MK-300 and TANK-PRO — nothing for
   the SMC-Mixer.

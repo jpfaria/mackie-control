@@ -127,6 +127,11 @@ It teaches the loop the bugs here came from skipping — read the rig's own
 notes, prove the target moves, prove it moves the thing on the label, hand
 borrowed state back — and lives in [`skills/configuring-devices`](skills/configuring-devices/SKILL.md).
 
+Editing the manifest: `claude plugin validate ./` must pass, and in
+`.claude-plugin/plugin.json` `repository` is a plain URL string — the object
+form (`{"type": "git", "url": ...}`) is refused at install time (2026-09-22).
+The skill must stay under `skills/`, which is where the plugin looks for it.
+
 ## Documentation
 
 - [`docs/bridge.md`](docs/bridge.md) — the bridge, the drivers, the profile, the feedback

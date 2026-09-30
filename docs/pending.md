@@ -21,3 +21,19 @@ heard it.
   Ampero port already held by the running bridge ("input overrun"). The HD 8
   cannot say at all — no scene parameter in its state — so there the arrows
   start from the scene the bridge itself last loaded, kept across restarts.
+- **The "where am I" indicator** (2026-09-22, not settled). João's design:
+  the lamp under the knob is the row, R the device's column, S the scene's.
+  The knob lamp is the fader-position lamp (Pitch Bend only) and blinks until
+  the physical fader matches, so a row whose fader has not been touched since
+  the bridge started blinks until it is moved — João: "ele nao para de piscar
+  NUNCA". A steady alternative was proposed (row on the square row, R and S as
+  columns, no Pitch Bend) and an attempt at it was discarded unfinished; the
+  installed code is `a9745da`. Decide with João before touching it again.
+- **The HD 8 OUT default leaves out ADAT 11/12** (`aux/ch10`): it takes
+  `aux/ch5`-`ch9` (ADAT 1/2 to 9/10), eight faders in all, and in João's rig
+  ADAT 11/12 is the FRFR. Offered twice (swap 1/2 for 11/12), no answer yet.
+- **A destination that never confirms is retried on every move.**
+  `line/ch19/trim` logged "the daemon did not confirm the write" ten times per
+  fader move. Proposed: after three failures in a row mark it refused, say so
+  once, and try again on bank change, scene load or reconnect. João said
+  "ambos" (this plus the profile fix); only the profile was done.

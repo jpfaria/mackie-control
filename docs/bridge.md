@@ -32,6 +32,46 @@ and moves nothing (measured 2026-09-22). The `hd8` driver therefore reconnects
 operation becomes `Unsupported` and the bridge carries on. Power-cycling the
 interface no longer means restarting the bridge.
 
+### When `ucdaemon` itself restarts
+
+Measured 2026-09-23, after the Mac was moved and the mixer reconnected:
+
+- Symptom: every HD 8 read answers, **no write is confirmed** (the FRFR mute
+  looked stuck on). Restarting the bridge does not help; the fault is in
+  PreSonus' `ucdaemon`.
+- `ucdaemon` runs as root (`/Library/LaunchDaemons/com.presonus.ucdaemon.plist`).
+  Restarting it takes `sudo launchctl kickstart -k system/com.presonus.ucdaemon`,
+  which only João runs — never ask for or accept his password in chat.
+- After that restart the daemon listens on a **different TCP port** (59791 →
+  62586) and gives the HD 8 a **different session byte**. `quantum-hd8` had
+  both fixed; since then `connect` discovers them (its `tests/test_discover.py`).
+  Reinstall `quantum-hd8` and `mackie service restart` to pick it up.
+- The restart can also drop the HD 8 into **Mixer Bypass** (`global/mixerMode = 0`).
+  There only `global/*` exists: MAIN, PHONES 1 and PHONES 2 still move, but a
+  bus fader such as the FRFR (`aux/ch10`, ADAT 11/12) has nothing to write.
+  Loading any scene leaves Bypass — but it also changes the whole routing, so
+  not without João's go-ahead.
+- The bridge's own connection can go stale while one-off connections write
+  fine: `mackie service restart` fixes it.
+
+### What the HD 8 accepts, per channel
+
+Measured 2026-09-22 by writing a value, reading it back and restoring it:
+
+- `trim` and `preampgain` exist in the table for every channel but only the
+  eight analogue inputs honour them. On the ADAT channels measured (`trim` on
+  ch16, 17, 19, 25; `trim` and `preampgain` on ch19, 20) the write gets no echo
+  and the value does not change — there only `volume` is accepted.
+- `line/chN/volume` is the channel's level **inside the HD 8 mixer**, not what
+  reaches the computer: with `line/ch19/volume` at 0.0 (−96 dB) the guitar on
+  that channel still arrives in OpenRig. A fader on it moves monitoring only.
+- A write is confirmed in 31 ms (median of 10, worst 46), so a fader that feels
+  late is waiting on takeover or on another driver, not on the interface.
+- When checking a fader value by reading it back, use `quantum-hd8` at
+  `bb73f94` or later: before that its human-readable value showed 0 dB as
+  −18.1 dB (the write was right, the read was wrong) and made a correct write
+  look failed.
+
 ## Profile
 
 ```yaml
@@ -112,7 +152,18 @@ A bank is a device. The arrows move through both:
 | Channel ◀ / ▶ | pages devices too, unchanged |
 
 Neither wraps: one press too many must not put the rig somewhere it was
-walking away from.
+walking away from. **At the end of a list an arrow does nothing** — it does not
+reload the scene it is already on, nor reselect the bank: reloading an Ampero
+patch throws away any edit not yet saved (seen 2026-09-22 as three
+`scene 1/300` in a row). Each device keeps its own position in its list, so
+leaving the Ampero on scene 7 does not make ▶ on the HD 8 jump to a scene 8 it
+does not have.
+
+Loading on the press means walking the list **changes the rig at every step**:
+each HD 8 scene carries its own sends, so paging past `MAIN-FRFR` on the way to
+another scene leaves the FRFR bus at that scene's default (2026-09-22, the
+FRFR send went from 0.266 to 0.735 and the rig went quiet). That is the cost of
+the choice, not a bug.
 
 ```yaml
 banks:
@@ -130,9 +181,10 @@ knob** is the row — it is the fader-position lamp, so the row is shown by a
 pitch bend on that channel, and the flash ends by handing that channel back **the
 position that fader itself last reported**, which is the only thing that stops
 it: the surface compares against the physical fader, so the gear's own value
-leaves it blinking for ever. A row whose fader has not been touched since the
-bridge started is therefore not shown at all — a knob blinking for ever is
-worse than no number. The column says which
+leaves it blinking for ever. Until that fader has been touched there is no
+such position, so the row is still shown (showing nothing said nothing) and
+that knob **keeps blinking until the fader is moved** — which João reported as
+"never stops". This indicator is not settled; see [`pending.md`](pending.md). The column says which
 number it is: **R for the device** (which resource), **S for the scene**. Only what just changed is
 shown — the R row cannot carry two numbers at once — and the real mute and solo
 LEDs come straight back after the flash.
@@ -144,6 +196,20 @@ the gear switched off:
 1  HD 8     (hd8)   8 faders   scenes: 1 ELEMENT  2 MIXER-ON  3 MK300-FRFR
 2  Mac      (mac)   2 faders   no scenes
 ```
+
+## Nothing slow on the MIDI thread
+
+The thread that reads the surface must never wait on a driver. On 2026-09-22
+two things did, and a fader on the Spotify bank felt late by most of a second:
+
+- `push_state` read all eight faders on every bank change even with
+  `positions` off, and a read of Spotify's volume through AppleScript costs
+  ~117 ms. It now reads only what it is going to send.
+- An encoder did a read and a write per detent, inline. Detents are now summed
+  and applied once per cycle, on the drain thread.
+
+The same rule gave the transport lamps below their shape. A fader sweep of one
+second now lands its last write ~120 ms after the hand stops.
 
 ## Transport lamps
 
@@ -209,9 +275,9 @@ volume, where a jump costs nothing, and wrong for a monitor bus.
 ## Feedback
 
 On every bank change, scene load, mute and solo the bridge pushes state back:
-the LEDs for mute, solo and the loaded scene (R), plus three blinks of the bank
-number — the mute row is the row, the square button is the column, so 8×8
-addresses 64 banks.
+the LEDs for mute and solo, plus three blinks of the number that just changed —
+the knob lamp is the row, R (device) or S (scene) the column, so 8×8 addresses
+64 of each (see *Where am I* above).
 
 **Fader positions are not sent by default.** Sending one makes the surface blink
 that channel's LED until the physical fader matches, which is a useful

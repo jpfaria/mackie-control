@@ -27,9 +27,33 @@ the rest of the operation continues. On 2026-09-21 one refused write
 (`line/ch20/mute`) aborted a whole solo halfway through, leaving the mixer in a
 broken state and the button unable to undo it.
 
-## Tests run without hardware
+## Tests run without hardware, and without the real home
 Drivers and clients go in by injection (`HD8(client=...)`), and the profile is
 data. No test in this repo may require a device to be plugged in.
+Nor may a test write outside `tmp_path`: `tests/conftest.py` points
+`XDG_STATE_HOME` at a temp dir for every test, because on 2026-09-22 a test
+written before that fixture left `~/.local/state/mackie-control/ignored.json`
+in João's home.
+
+## Nothing slow on the MIDI thread
+The thread reading the surface never waits on a driver: reads happen only
+when their value is sent, encoder detents are summed and applied on the drain,
+and anything polled (transport lamps) is asked once per target, once a second,
+off the MIDI thread. A single 117 ms AppleScript call per fader made the
+Spotify bank feel a second late (2026-09-22, `docs/bridge.md`).
+
+## When João names a physical thing, light it — do not argue the name
+The indicator lamp took a dozen rounds on 2026-09-22 because "the LED under
+the knob", "M", "R" and "the row" were argued as words while each fix was
+pushed on a guess. What ended it: stop the bridge, light **one** lamp at a time
+with a number, and ask which number is the one he means (answer: the knob lamp
+is the fader-position lamp, reachable only by Pitch Bend). Do that first,
+before changing code, and never with the bridge running — it clears the lamps.
+
+## Stop the bridge only with João's go-ahead
+A `pkill -f "mackie bridge"` for a measurement also kills the one he just
+started in his terminal (it happened twice on 2026-09-22). Say it will stop,
+and tell him the command to bring it back when done.
 
 ## Language
 Code, comments, docs and log messages are in **English**. João reads Portuguese
