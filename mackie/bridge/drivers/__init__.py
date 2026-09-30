@@ -64,9 +64,10 @@ class Driver:
 def classes() -> dict[str, type]:
     """The driver classes, without building any: reading a class attribute
     (its default banks, its buttons) must not open a connection to gear."""
-    from . import ampero2, hd8, mac, mk300
+    from . import ampero2, hd8, mac, mk300, openrig
     return {"hd8": hd8.HD8, "mac": mac.MacVolume, "app": mac.AppVolume,
-            "mk300": mk300.MK300, "ampero2": ampero2.Ampero2}
+            "mk300": mk300.MK300, "ampero2": ampero2.Ampero2,
+            "openrig": openrig.OpenRig}
 
 
 def build(name: str, **opts) -> Driver:
