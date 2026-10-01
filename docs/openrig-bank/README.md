@@ -39,3 +39,7 @@ thread right after the bank is selected and once a second after that, maps the
 first eight strips of that direction in OpenRig's order, and addresses each
 strip by its id. When the list changes, takeover starts over for that bank. A
 profile only writes `- {driver: openrig}`.
+
+**2026-10-01:** OpenRig is one device, not two banks. OUT and IN are its
+scenes (`scenes()` / `load_scene()`), paged with the arrows like any other
+device's; the bank carries `live: mixer` and the faders follow the scene.

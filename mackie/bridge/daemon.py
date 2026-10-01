@@ -213,6 +213,7 @@ class Bridge:
             self.log(f"  !! scene {names[i]}: {e}")
             return False
         self.scene_index = i
+        self._live_due = True           # a live bank's faders follow its scene
         self.soloed, self.muted_before = None, {}
         self.took_over.clear()
         self.log(f"  -> scene {i + 1}/{len(names)}: {names[i]}")

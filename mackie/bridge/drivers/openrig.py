@@ -11,8 +11,8 @@ streamable HTTP. A POST of `initialize` answers `text/event-stream` with a
 request before `initialize` is refused with 422. Answers come as SSE `data:`
 lines holding the JSON-RPC response.
 
-The strips change with every project and chain opened, so the driver's banks
-are live: `OpenRig OUT` and `OpenRig IN` take their faders from
+The strips change with every project and chain opened, so the driver's bank
+is live: its two scenes, OUT and IN, take their faders from
 `openrig://mixer` while the bridge runs, in the order OpenRig lists them, and
 address each strip by its id. Nothing about them is written in a profile.
 
@@ -109,12 +109,15 @@ class Http:
 class OpenRig(Driver):
     name = "openrig"
 
-    DEFAULT_BANKS = [{"name": "OpenRig OUT", "live": "output"},
-                     {"name": "OpenRig IN", "live": "input"}]
+    # One device: its outputs and its inputs are two scenes the arrows page
+    # through, not two banks (2026-10-01).
+    DEFAULT_BANKS = [{"name": "OpenRig", "live": "mixer"}]
+    SCENES = [("OUT", "output"), ("IN", "input")]
 
     def __init__(self, client=None):
         self.cli = client if client is not None else Http()
         self._ready = client is not None
+        self.view = 0                   # which of SCENES the faders show
 
     def _retry(self, operation):
         """Connect on first use -- OpenRig may start after the bridge -- and
@@ -147,9 +150,22 @@ class OpenRig(Driver):
         raise Unsupported(f"openrig: {target!r} matches "
                           + ", ".join(repr(s["name"]) for s in found))
 
+    def scenes(self):
+        return [name for name, _ in self.SCENES]
+
+    def current_scene(self):
+        return self.view
+
+    def load_scene(self, index):
+        if not 0 <= index < len(self.SCENES):
+            raise Unsupported(f"openrig: no scene {index + 1}")
+        self.view = index
+
     def live_faders(self, which):
         """The first eight strips of one direction ("output" / "input"), as
-        OpenRig lists them now."""
+        OpenRig lists them now; "mixer" is whichever the current scene shows."""
+        if which == "mixer":
+            which = self.SCENES[self.view][1]
         strips = self._retry(lambda c: c.resource("openrig://mixer")["strips"])
         mine = [s for s in strips if s.get("direction") == which][:8]
         group = "in" if which == "input" else "out"

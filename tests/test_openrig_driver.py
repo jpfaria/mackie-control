@@ -157,5 +157,20 @@ def test_openrig_banks_are_live_and_expand_from_a_bare_bank():
     from mackie.bridge.defaults import expand
     from mackie.bridge.profile import parse_profile
     p = expand(parse_profile({"banks": [{"driver": "openrig"}]}))
-    assert [(b.name, b.live, b.faders) for b in p.banks] == [
-        ("OpenRig OUT", "output", {}), ("OpenRig IN", "input", {})]
+    assert [(b.name, b.live, b.faders) for b in p.banks] == [("OpenRig", "mixer", {})]
+
+
+def test_out_and_in_are_scenes_of_one_device():
+    mcp = FakeMcp()
+    for s in mcp.strips:
+        s["direction"] = "output"
+    mcp.strips.append({"id": "in:0@hd8", "name": "GUITARRA 1", "gain_db": 0.0,
+                       "muted": False, "direction": "input"})
+    d = openrig.OpenRig(client=mcp)
+    assert d.scenes() == ["OUT", "IN"] and d.current_scene() == 0
+    assert d.live_faders("mixer")[1]["target"] == "out:24,25@hd8"
+    d.load_scene(1)
+    assert d.live_faders("mixer") == {1: {"target": "in:0@hd8", "label": "GUITARRA 1",
+                                          "group": "in", "mute": "mute:in:0@hd8"}}
+    with pytest.raises(drivers.Unsupported):
+        d.load_scene(2)
