@@ -891,3 +891,13 @@ def test_a_live_bank_whose_driver_is_down_has_no_faders_and_no_crash():
     b.refresh_live()
     assert b.bank.faders == {}
     assert len([m for m in logged if "not reachable" in m]) == 1
+
+
+def test_a_fader_whose_gear_stops_answering_does_not_raise():
+    class Gone(FakeDriver):
+        def read(self, target):
+            raise Unsupported("openrig: not reachable")
+    p = profile.parse_profile(PROFILE)
+    b = daemon.Bridge(p, drivers={"fake": Gone()}, log=lambda *_: None)
+    b.last_seen[(0, 0)] = 0.2
+    b.fader(0, 0.9)                              # used to raise TypeError

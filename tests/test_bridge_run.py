@@ -132,3 +132,22 @@ def test_the_cli_finds_the_surface_the_same_way_the_bridge_does():
     assert "find_port" in inspect.getsource(cli.cmd_watch)
     assert run.find_port(surfaces.get().port_hints,
                          ["SMC-Mixer Bluetooth"]) == "SMC-Mixer Bluetooth"
+
+
+def test_a_message_that_raises_is_logged_and_the_bridge_keeps_reading(monkeypatch):
+    monkeypatch.setattr(run, "load_profile", lambda p: _profile())
+    monkeypatch.setattr(run.Bridge, "on_midi",
+                        lambda self, msg: (_ for _ in ()).throw(TypeError("boom")))
+    midi = FakeMidi([ON, ON, ON])
+    lines = []
+    real_open = midi.open_input
+
+    def open_with_message(name):
+        p = real_open(name)
+        p.incoming = ["a fader"]
+        return p
+    midi.open_input = open_with_message
+    with pytest.raises(KeyboardInterrupt):
+        run.run("ignored.yaml", midi=midi, log=lines.append, watch=0,
+                sleep=lambda s: midi.tick())
+    assert any("boom" in l for l in lines)

@@ -350,7 +350,9 @@ class Bridge:
         if key not in self.took_over:
             current = self._read(dest)
             previous = self.last_seen.get(key)
-            crossed = previous is not None and (previous - current) * (value - current) < 0
+            # Gear that cannot answer (OpenRig closed) cannot hold the fader.
+            crossed = (current is not None and previous is not None
+                       and (previous - current) * (value - current) < 0)
             if current is None or abs(value - current) <= NEAR or crossed:
                 self.took_over.add(key)
                 self.log(f"  .. fader {channel + 1} ({dest.label}) took over")

@@ -98,7 +98,13 @@ def _read_until_gone(bridge, inp, hints, midi, sleep, watch):
     since = 0.0
     while True:
         for msg in inp.iter_pending():
-            bridge.on_midi(msg)
+            # One bad message must not end the bridge: on 2026-10-01 a fader
+            # moved while OpenRig was closed raised here, the process died,
+            # and every fader went dead with it.
+            try:
+                bridge.on_midi(msg)
+            except Exception as e:
+                bridge.log(f"  !! {msg}: {e!r}")
         sleep(POLL)
         since += POLL
         if since >= watch:
