@@ -42,3 +42,24 @@ Rules that came out of real bugs:
 
 Register it in `drivers.build()` and add a test with a fake client, like
 `tests/test_bridge_drivers.py`.
+
+## Banks that cannot be written down (`live_faders`)
+
+Some gear has no fixed channel list: OpenRig's mixer strips change with the
+project and the chains that are open, so any bank naming them in the YAML goes
+stale the moment another project is loaded. A driver for gear like that
+implements
+
+```python
+live_faders(which)    -> {position: fader-dict}, or raises Unsupported
+```
+
+and its `DEFAULT_BANKS` entry carries `live: <which>` instead of `faders:`
+(`openrig` uses `out` and `in`, giving the banks *OpenRig OUT* and
+*OpenRig IN*). The daemon then asks the driver on entering the bank and once a
+second (`refresh_live`), and a failure is logged, not fatal — the bank just
+keeps the faders it had. `describe` prints `live` where a static bank prints a
+fader count.
+
+The default is `Unsupported`: a driver whose channels *are* stable should keep
+listing them in `DEFAULT_BANKS`, which costs nothing per second.
